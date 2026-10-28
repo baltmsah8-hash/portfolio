@@ -1,3 +1,4 @@
+import { Content } from "next/font/google";
 import z from "zod";
 
 const phoneRegex: RegExp = /^(01\d{9})|(\+[1-9]\d{1,14})$/;
@@ -20,4 +21,14 @@ const UpdateSchema = z.object({
     phone: z.string().regex(phoneRegex, "Invalid phone number"),
 });
 
-export { RegisterSchema, LoginSchema, UpdateSchema }
+const userMessageSchema = z.object({
+  content: z.string().min(8, "Your message is too short (min 8 characters)"),
+});
+
+const adminMessageSchema = z.object({
+  userId: z.string(),
+  content: z.string().min(8, "Your message is too short (min 8 characters)"),
+});
+
+
+export { RegisterSchema, LoginSchema, UpdateSchema, userMessageSchema, adminMessageSchema };

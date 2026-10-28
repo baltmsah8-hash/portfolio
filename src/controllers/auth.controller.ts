@@ -116,6 +116,13 @@ export const authController = {
         return { success: true, message: "User updated successfully", user: updatedUser };
     }),
 
+    allUsers: handleApi(async () => {
+        await connectDB();
+
+        const users = await UserModel.find({});
+        return { success: true, data: users };
+    }),
+
     logout: handleApi(async () => {
         const response = NextResponse.json({
             success: true,
