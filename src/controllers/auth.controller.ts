@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import * as jose from "jose";
 import { UserModel } from "../models/user.model";
+import { ChatModel } from "../models/chat.model";
 import { RegisterSchema, LoginSchema, UpdateSchema } from "../lib/validators";
 import { AppError, handleApi } from "../lib/api-handler";
 import { connectDB } from "../lib/db";
@@ -43,7 +44,7 @@ export const authController = {
             path: "/",
         });
 
-    return response;
+        return response;
     }),
     register: handleApi(async (body) => {
         await connectDB();
@@ -67,19 +68,21 @@ export const authController = {
             role: "user",
         });
 
-            const token = await new jose.SignJWT({ userId: newUser._id.toString(), role: newUser.role })
+        const token = await new jose.SignJWT({ userId: newUser._id.toString(), role: newUser.role })
             .setProtectedHeader({ alg: "HS256" })
             .setExpirationTime("7d")
             .sign(JWT_SECRET);
 
         const response = NextResponse.json(
-            { success: true, 
-                message: "email created successfully", 
-                user: { 
-                    userId: newUser._id, 
-                    ...newUser, createdAt: newUser.createdAt, 
-                    updatedAt: newUser.updatedAt 
-            } }, { status: 201 });
+            {
+                success: true,
+                message: "email created successfully",
+                user: {
+                    userId: newUser._id,
+                    ...newUser, createdAt: newUser.createdAt,
+                    updatedAt: newUser.updatedAt
+                }
+            }, { status: 201 });
 
         response.cookies.set("token", token, {
             httpOnly: true,
@@ -92,11 +95,17 @@ export const authController = {
         return response
     }),
 
-    updateData: handleApi(async (body) => {
+    updateData: handleApi(async (body, req: NextRequest) => {
         await connectDB();
 
         const validData = UpdateSchema.parse(body);
         const { name, email, phone } = validData;
+
+            const userId = req.headers.get("x-user-id");
+            
+            if (!userId) {
+                return NextResponse.json({ success: false, error: "User identity mising" }, { status: 401 });
+            }
 
         const updateData: { name?: string; phone?: string } = {};
 
@@ -116,11 +125,25 @@ export const authController = {
         return { success: true, message: "User updated successfully", user: updatedUser };
     }),
 
-    allUsers: handleApi(async () => {
+    allUsers: handleApi(async (req: NextRequest) => {
         await connectDB();
 
+        const role = req.headers.get("x-user-role");
+        if (role !== "admin") {
+            throw new AppError("Forbidden: Admin access required", 403);
+        }
+
+        const unReadedCount = await ChatModel.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalSum: { $sum: "$unreadCount" }
+                }
+            }
+        ]);
+
         const users = await UserModel.find({});
-        return { success: true, data: users };
+        return { success: true, data: users, unReadedMessages: unReadedCount };
     }),
 
     logout: handleApi(async () => {

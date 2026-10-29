@@ -1,9 +1,16 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const SingleMessageSchema = new mongoose.Schema({
     id: { type: String, required: true },
+    sender: { 
+        type: String, 
+        required: true, 
+        enum: ['user', 'admin'],
+        default: "user",
+    },
     isReaded: { type: Boolean, default: false },
     content: { type: String, required: true },
+    isPinned: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -14,10 +21,8 @@ const ChatSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    incomingCount: { type: Number, default: 0 },
-    outgoingCount: { type: Number, default: 0 },
-    incomingMessages: [SingleMessageSchema],
-    outgoingMessages: [SingleMessageSchema],
+    unreadCount: { type: Number, default: 0 },
+    messages: [SingleMessageSchema],
 },{ timestamps: true });
 
-export const ChatModel = mongoose.models.Chat || mongoose.model("Chat", ChatSchema);
+export const ChatModel = mongoose.models.Chat || mongoose.model('Chat', ChatSchema);

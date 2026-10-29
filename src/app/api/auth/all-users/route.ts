@@ -1,14 +1,9 @@
 import { NextResponse, NextRequest } from "next/server";
 import { authController } from "@/src/controllers/auth.controller";
 
-export async function GET(request: Request) {
-    const userRole = request.headers.get("x-user-role");
+export async function GET(request: NextRequest) {
 
-    if (userRole !== "admin") {
-        return Response.json({ success: false, error: "Forbidden: Admin access required" }, { status: 403 });
-    }
-
-    const result = await authController.allUsers(); 
+    const result = await authController.allUsers(request); 
 
     return NextResponse.json(result);
 }
