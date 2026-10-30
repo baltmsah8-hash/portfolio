@@ -23,12 +23,12 @@ const UpdateSchema = z.object({
 // Messages validators
 
 const userMessageSchema = z.object({
-  content: z.string().min(8, "Your message is too short (min 8 characters)"),
+    content: z.string().min(8, "Your message is too short (min 8 characters)"),
 });
 
 const adminMessageSchema = z.object({
-  userId: z.string(),
-  content: z.string().min(8, "Your message is too short (min 8 characters)"),
+    userId: z.string(),
+    content: z.string().min(8, "Your message is too short (min 8 characters)"),
 });
 
 // Projects validators

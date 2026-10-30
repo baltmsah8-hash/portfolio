@@ -5,7 +5,6 @@ import { connectDB } from "../lib/db";
 import { NextRequest } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 
-// إعدادات كلوديناري للباك إيند (بتقرأ تلقائي من ملف الـ .env بتاعك)
 cloudinary.config({
     cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
