@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import * as jose from "jose";
+import createMiddleware from 'next-intl/middleware';
+
+const intlMiddleware = createMiddleware({
+    locales: ['en', 'ar'],
+    defaultLocale: 'ar'
+});
 
 
 const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
@@ -71,8 +77,34 @@ const authorize = (request: NextRequest, headers: Headers) => {
         }
     }
 
+
     return null;
+};
+
+export async function proxy(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+    if (pathname.startsWith('/api') || pathname.startsWith('/admin')) {
+        const rateLimitResponse = rateLimiter(request);
+        if (rateLimitResponse) return rateLimitResponse;
+
+        const requestHeaders = new Headers(request.headers);
+
+        const authResponse = await authenticate(request, requestHeaders);
+        if (authResponse) return authResponse;
+
+        const authorizeResponse = authorize(request, requestHeaders);
+        if (authorizeResponse) return authorizeResponse;
+
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        });
+    } else {
+        if (pathname.startsWith('/_next') || pathname.includes('.')) {
+            return NextResponse.next();
+        }
+        return intlMiddleware(request);
+    }
 }
 
-
-export { rateLimiter, authenticate, authorize };

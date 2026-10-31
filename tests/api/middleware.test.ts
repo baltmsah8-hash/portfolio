@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { authenticate, authorize, rateLimiter } from "@/src/middleware";
+import { authenticate, authorize, rateLimiter, proxy } from "@/src/proxy";
 import { jwtVerify } from "jose";
 
 jest.mock("jose", () => ({
@@ -13,7 +13,7 @@ function createRequest(
   return new NextRequest(url, { headers });
 }
 
-describe("API middleware helpers", () => {
+describe("API proxy and helpers", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -103,5 +103,38 @@ describe("API middleware helpers", () => {
       error: "Forbidden: Admin access required",
     });
     expect(authorize(request, new Headers({ "x-user-role": "admin" }))).toBeNull();
+  });
+
+  describe("Main proxy function", () => {
+    it("successfully passes valid admin requests with mutated headers", async () => {
+      // محاكاة نجاح توكن الأدمن
+      jest.mocked(jwtVerify).mockResolvedValue({
+        payload: { userId: "admin-1", role: "admin" },
+        protectedHeader: { alg: "HS256" },
+      } as never);
+
+      const request = createRequest("http://localhost/api/admin/dashboard", {
+        cookie: "token=valid_admin_token",
+      });
+
+      const response = await proxy(request);
+
+      expect(response).toBeDefined();
+      expect(response.headers.get("x-user-id")).toBeNull();
+    });
+
+    it("stops execution early if rate limiter triggers", async () => {
+      const ip = "192.0.2.1";
+      const request = createRequest("http://localhost/api/auth/login", {
+        "x-forwarded-for": ip,
+      });
+
+      for (let i = 0; i < 5; i++) {
+        await proxy(request);
+      }
+
+      const blockedResponse = await proxy(request);
+      expect(blockedResponse.status).toBe(429);
+    });
   });
 });
