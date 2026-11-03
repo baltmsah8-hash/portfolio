@@ -6,10 +6,6 @@ const UserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, lowercase: true },
     phone: { type: String, required: true },
     password: { type: String, required: true },
-    avatar: { 
-        type: String, 
-        default: "https://dicebear.com"
-    },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     },{ timestamps: true });
 

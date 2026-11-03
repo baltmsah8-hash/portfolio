@@ -6,6 +6,11 @@ const ProjectSchema = new mongoose.Schema({
     images: [{ type: String, required: true }],
     liveLink: { type: String },
     repoLink: { type: String },
+    stack: { 
+        type: String, 
+        enum: ["fullstack", "mobile", "frontend", "backend"], 
+        required: true 
+    },
     tags: [{ type: String, required: true }],
 }, { timestamps: true });
 

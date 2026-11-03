@@ -6,6 +6,7 @@ import Footer from "../../components/footer";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import ToTopButton from "../../components/topBtn";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Portfolio",
+  title: "Abdo_Hany",
   description: "",
 };
 
@@ -51,12 +52,13 @@ export default async function RootLayout({ children, params }: LayoutProps) {
       dir={direction}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased overflow-x-hidden scroll-smooth`}
     >
-      <body className="min-h-full flex flex-col overflow-x-hidden">
+      <body className="min-h-full flex flex-col bg-[#02040a] overflow-x-hidden">
         <NextIntlClientProvider messages={messages}>
           <Navbar />
           {children}
           <Footer />
         </NextIntlClientProvider>
+        <ToTopButton />
       </body>
     </html>
   );

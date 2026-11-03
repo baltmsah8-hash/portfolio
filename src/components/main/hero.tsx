@@ -1,46 +1,69 @@
 "use client";
-import React from 'react'
-import dynamic from 'next/dynamic';
+import React from "react";
+import dynamic from "next/dynamic";
+import { useLocale, useTranslations } from "next-intl";
 
-const Robot3D = dynamic(
-    () => import('@splinetool/react-spline'),
-    { ssr: false }
-);
+const Robot3D = dynamic(() => import("@splinetool/react-spline"), {
+  ssr: false,
+});
 
 const Hero = () => {
-  return (
-    <main className="relative min-h-screen w-full bg-[#030712] text-white overflow-hidden flex flex-col items-center justify-center">
-      
-      {/* 1. تأثير الهالة الضوئية الملونة خلف الروبوت
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none -z-10" />
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none -z-10" />
+  const t = useTranslations("Hero");
+  const currentLocale = useLocale();
+  const isRtl = currentLocale === "ar";
 
-      {/* 2. حاوية الروبوت ثلاثي الأبعاد */}
-      <div className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-none">
-        {/* 👇 حط الرابط اللي نسخته من موقع Spline بين القوسين هنا 👇 */}
+  return (
+    <main
+      className="relative min-h-screen w-full bg-[#02040a] text-white overflow-hidden flex items-center"
+      dir={isRtl ? "rtl" : "ltr"}
+    >
+
+      <div className="absolute top-1/4 left-1/4 w-[350px] h-[300px] bg-emerald-500/10 rounded-full blur-[130px] pointer-events-none animate-pulse duration-[6000ms]" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-green-500/5 rounded-full blur-[150px] pointer-events-none animate-pulse duration-[8000ms]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-teal-500/5 rounded-full blur-[180px] pointer-events-none" />
+
+      <div className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-auto z-10">
+        <Robot3D scene="https://prod.spline.design/I3XQDee3E3Dg2mIC/scene.splinecode" />
       </div>
 
-      {/* 3. الإمضاء بتاعك مكتوب في الكود فوق المجسم وبخط يدوي أنيق */}
-      <div className="absolute bottom-12 right-12 z-10 pointer-events-none select-none">
-        <h1 
-          className="text-3xl md:text-4xl text-gray-300 opacity-80 tracking-wide"
+      <div className="container mx-auto px-6 md:px-12 lg:px-20 z-20 pointer-events-none relative w-full">
+        <div
+          className={`max-w-2xl flex flex-col gap-4 ${isRtl ? "text-right" : "text-left"}`}
+        >
+
+          <div className="inline-block w-max">
+            <h2
+              className={`text-2xl max-md:text-xl font-extrabold tracking-tight overflow-hidden whitespace-nowrap `}
+            >
+              {t("titleFirst")}{" "}
+              <span className="bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                {t("titleSecond")}
+              </span>
+            </h2>
+          </div>
+
+          <p className="text-gray-400 text-base md:text-lg leading-relaxed min-lg:max-w-lg max-w-md mt-2 pointer-events-auto whitespace-pre-line">
+            {t("description")}
+          </p>
+
+          <div className="mt-4 pointer-events-auto">
+            <button className="px-6 py-3 rounded-full bg-green-500/5 border border-green-500/20 hover:bg-green-500/20 hover:border-green-400 transition-all duration-300 font-medium text-sm backdrop-blur-sm cursor-pointer shadow-lg shadow-green-950/20 text-green-400">
+              {t("buttonText")}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={`absolute bottom-8 z-20 pointer-events-none select-none ${isRtl ? "left-8 md:left-12" : "right-8 md:right-12"}`}
+      >
+        <h1
+          className="text-2xl md:text-3xl bg-gradient-to-r from-gray-200 via-gray-400 to-gray-500 bg-clip-text text-transparent opacity-90 tracking-wide font-medium"
           style={{ fontFamily: "'Alex Brush', 'Great Vibes', cursive" }}
         >
           Abdelrahman Hany
         </h1>
       </div>
-
-      {/* 4. محتوى موقعك الأساسي (تقدر تعدله براحتك) */}
-      <div className="z-20 text-center pointer-events-auto mt-[-100px]">
-        <h2 className="text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-500">
-          المستقبل يبدأ هنا
-        </h2>
-        <p className="mt-4 text-gray-400 text-lg max-w-md mx-auto">
-          هذا النص يظهر فوق الخلفية التفاعلية ثلاثية الأبعاد بوضوح تام.
-        </p>
-      </div>
-        <Robot3D scene="https://prod.spline.design/I3XQDee3E3Dg2mIC/scene.splinecode" />
-
     </main>
   );
 }

@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { UserModel } from "../models/user.model";
 
-const MONGODB_URI = process.env.MONGODB_URI || "";
+const MONGODB_URL = process.env.MONGODB_URL || "";
 
-if (!MONGODB_URI) {
+if (!MONGODB_URL) {
     throw new Error("Error in mongodb url");
 }
 
@@ -74,7 +74,7 @@ export async function connectDB() {
             serverSelectionTimeoutMS: 5000,
         };
 
-        cached.promise = mongoose.connect(MONGODB_URI).then(async (m) => {
+        cached.promise = mongoose.connect(MONGODB_URL).then(async (m) => {
             console.log(`Conected to mongodb successfully!`);
             await seedAdmin();
             return m;

@@ -1,0 +1,47 @@
+[
+    {
+        "id": "react",
+        "name": "React",
+        "logo": "/tech_logos/react_dark.svg"
+    },
+    {
+        "id": "nextjs",
+        "name": "Next.js",
+        "logo": "/tech_logos/nextjs_icon_dark.svg"
+    },
+    {
+        "id": "typescript",
+        "name": "TypeScript",
+        "logo": "/tech_logos/typescript.svg"
+    },
+    {
+        "id": "tailwindcss",
+        "name": "Tailwind CSS",
+        "logo": "/tech_logos/tailwindcss.svg"
+    },
+    {
+        "id": "reactnative",
+        "name": "React Native",
+        "logo": "/tech_logos/react_dark.svg"
+    },
+    {
+        "id": "nodejs",
+        "name": "Node.js",
+        "logo": "/tech_logos/nodejs.svg"
+    },
+    {
+        "id": "express",
+        "name": "Express",
+        "logo": "/tech_logos/expressjs_dark.svg"
+    },
+    {
+        "id": "mongodb",
+        "name": "MongoDB",
+        "logo": "/tech_logos/mongodb.svg"
+    },
+    {
+        "id": "postgresql",
+        "name": "PostgreSQL",
+        "logo": "/tech_logos/postgresql.svg"
+    }
+]

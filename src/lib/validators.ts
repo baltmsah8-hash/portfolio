@@ -39,6 +39,7 @@ const projectValidatorSchema = z.object({
     images: z.array(z.string().url("Invalid image URL format")).min(1, "At least one image is required"),
     liveLink: z.string().url("Invalid live link URL").optional().or(z.literal("")),
     repoLink: z.string().url("Invalid repo link URL").optional().or(z.literal("")),
+    stack: z.array(z.string()).min(1, "At least one tag is required"),
     tags: z.array(z.string()).min(1, "At least one tag is required")
 });
 
