@@ -35,15 +35,40 @@ export const ProjectController = {
         }
 
         const validData = projectValidatorSchema.parse(body);
-        const newProject = await ProjectModel.create(validData);
 
-        return { success: true, message: "Project created successfully", data: newProject };
+        try {
+            const newProject = await ProjectModel.create(validData);
+            return { success: true, message: "Project created successfully", data: newProject };
+        } catch (error) {
+            console.warn("Validation or creation error we stopped uploading images:", error);
+
+            if (validData.images && Array.isArray(validData.images)) {
+                for (const imageUrl of validData.images) {
+                    const publicId = getPublicIdFromUrl(imageUrl);
+                    if (publicId) {
+                        await cloudinary.uploader.destroy(publicId).catch((err) => {
+                            console.error(`Failed to delete image ${publicId} from Cloudinary:`, err);
+                        });
+                    }
+                }
+            }
+        }
     }),
 
     getAll: handleApi(async () => {
         await connectDB();
         const projects = await ProjectModel.find({}).sort({ createdAt: -1 });
         return { success: true, data: projects };
+    }),
+
+    getProject: handleApi(async (id: string) => {
+        await connectDB();
+
+        const project = await ProjectModel.findById(id);
+        if (!project) {
+            throw new AppError("Project not found", 404);
+        }
+        return { success: true, data: project };
     }),
 
     update: handleApi(async (body, req: NextRequest) => {

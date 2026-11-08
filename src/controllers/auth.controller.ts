@@ -31,10 +31,7 @@ export const authController = {
             .setExpirationTime("7d")
             .sign(JWT_SECRET);
 
-        const response = NextResponse.json({
-            success: true,
-            user: user
-        });
+        const response = NextResponse.json({ success: true, role: user.role });
 
         response.cookies.set("token", token, {
             httpOnly: true,
@@ -73,16 +70,7 @@ export const authController = {
             .setExpirationTime("7d")
             .sign(JWT_SECRET);
 
-        const response = NextResponse.json(
-            {
-                success: true,
-                message: "email created successfully",
-                user: {
-                    userId: newUser._id,
-                    ...newUser, createdAt: newUser.createdAt,
-                    updatedAt: newUser.updatedAt
-                }
-            }, { status: 201 });
+        const response = NextResponse.json({ success: true, message: "email created successfully", role: newUser.role }, { status: 201 });
 
         response.cookies.set("token", token, {
             httpOnly: true,
@@ -123,6 +111,22 @@ export const authController = {
         }
 
         return { success: true, message: "User updated successfully", user: updatedUser };
+    }),
+
+    profile: handleApi(async (req: NextRequest) => {
+        await connectDB();
+
+        const userId = req.headers.get("x-user-id");
+        if (!userId) {
+            return NextResponse.json({ success: false, error: "User identity mising" }, { status: 401 });
+        }
+
+        const user = await UserModel.findById(userId).select("-password");
+        if (!user) {
+            throw new AppError("User not found", 404);
+        }
+
+        return { success: true, user };
     }),
 
     allUsers: handleApi(async (req: NextRequest) => {

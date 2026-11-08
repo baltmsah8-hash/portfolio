@@ -59,7 +59,6 @@ const seedAdmin = async () => {
     }
 }
 
-
 export async function connectDB() {
     if (cached.conn) return cached.conn;
 
@@ -75,7 +74,7 @@ export async function connectDB() {
         };
 
         cached.promise = mongoose.connect(MONGODB_URL).then(async (m) => {
-            console.log(`Conected to mongodb successfully!`);
+            console.log(`Connected to mongodb successfully!`);
             await seedAdmin();
             return m;
         }).catch((err) => {

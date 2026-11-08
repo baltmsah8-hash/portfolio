@@ -145,7 +145,7 @@ export default function Navbar() {
         })}
         <div className="pt-4 border-t border-green-500/10">
           <Link
-            href={`/${currentLocale}/contact`}
+            href={`/${currentLocale}/auth`}
             onClick={() => setIsOpen(false)}
             className="block w-full text-center py-3 px-5 rounded-xl bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold hover:from-green-500 hover:to-teal-500 transition-all shadow-lg shadow-green-950/30"
           >

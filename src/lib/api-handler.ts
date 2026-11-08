@@ -30,7 +30,7 @@ export function handleApi<TArgs extends unknown[], TResult>(
             if (error instanceof AppError) {
                 status = error.status;
                 message = error.message;
-            } 
+            }
 
             else if (error instanceof ZodError) {
                 status = 400;

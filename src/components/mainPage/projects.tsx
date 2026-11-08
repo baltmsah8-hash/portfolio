@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import ProjectCard, { ProjectItem } from "../projectCard";
-import ProjectSkeleton from "../projectSkeleton";
+import Link from "next/link";
+import ProjectCard, { ProjectItem } from "../assets/projectCard";
+import ProjectSkeleton from "../loading/projectSkeleton";
 
 const Projects = () => {
   const t = useTranslations("Projects");
@@ -16,15 +17,16 @@ const Projects = () => {
 
   useEffect(() => {
     const fetchProjects = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const response = await fetch("/api/projects");
         if (!response.ok) {
           throw new Error("Failed to fetch projects");
         }
-        const data = await response.json();
-
-        setProjects(data.slice(0, 4));
+        const result = await response.json();
+        if (result.success && Array.isArray(result.data)) {
+          setProjects(result.data.slice(0, 4));
+        }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Something went wrong");
       } finally {
@@ -60,14 +62,34 @@ const Projects = () => {
             </div>
           )}
 
+          {!projects && !error && (
+            <div className="col-span-full py-12 text-center font-mono text-sm text-green-400/80 border border-green-500/10 bg-green-500/[0.01] rounded-xl">
+              {`// No Projects Found`}
+            </div>
+          )}
+
           {!loading && !error && projects.map((project) => (
             <ProjectCard
-              key={project.id}
+              key={project._id}
               project={project}
               isRtl={isRtl}
             />
           ))}
         </div>
+
+        {!loading && !error && projects.length > 0 && (
+          <div className="mt-12 flex justify-center">
+            <Link
+              href="/projects"
+              className="flex-1 max-[75%] py-4 px-4 text-xs font-mono rounded-lg bg-green-500/5 hover:bg-green-500/10 border border-green-500/10 hover:border-green-500/30 text-green-400 flex items-center justify-center gap-2 transition-all duration-150 active:scale-95"
+            >
+              <span>{t("viewProjects")}</span>
+              <span className={`transition-transform duration-300 ${isRtl ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`}>
+                {isRtl ? "←" : "→"}
+              </span>
+            </Link>
+          </div>
+        )}
 
       </div>
     </section>

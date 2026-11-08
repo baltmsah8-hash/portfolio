@@ -34,12 +34,15 @@ const adminMessageSchema = z.object({
 // Projects validators
 
 const projectValidatorSchema = z.object({
-    title: z.string().min(3, "Title must be at least 3 characters long"),
-    description: z.string().min(10, "Description must be at least 10 characters long"),
+    title_en: z.string().min(3, "Title must be at least 3 characters long"),
+    title_ar: z.string().min(3, "Title must be at least 3 characters long"),
+    description_en: z.string().min(10, "Description must be at least 10 characters long"),
+    description_ar: z.string().min(10, "Description must be at least 10 characters long"),
     images: z.array(z.string().url("Invalid image URL format")).min(1, "At least one image is required"),
     liveLink: z.string().url("Invalid live link URL").optional().or(z.literal("")),
     repoLink: z.string().url("Invalid repo link URL").optional().or(z.literal("")),
-    stack: z.array(z.string()).min(1, "At least one tag is required"),
+    stack: z.enum(["fullstack", "mobile", "frontend", "backend"],
+        { message: "Stack must be one of: fullstack, mobile, frontend, backend" }),
     tags: z.array(z.string()).min(1, "At least one tag is required")
 });
 

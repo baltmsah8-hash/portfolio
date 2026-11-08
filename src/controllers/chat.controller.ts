@@ -1,4 +1,4 @@
-import { ChatModel } from "../models/chat.model"; // تأكد من مطابقة اسم الملف والـ import
+import { ChatModel } from "../models/chat.model";
 import { userMessageSchema, adminMessageSchema } from "../lib/validators";
 import { AppError, handleApi } from "../lib/api-handler";
 import { connectDB } from "../lib/db";
@@ -74,8 +74,7 @@ export const ChatController = {
     getChat: handleApi(async (body, req: NextRequest) => {
         await connectDB();
 
-        const userId = req.nextUrl.searchParams.get('UserId') ||
-            req.nextUrl.searchParams.get('userId') ||
+        const userId = req.nextUrl.searchParams.get('userId') ||
             req.headers.get("x-user-id");
 
         if (!userId) {

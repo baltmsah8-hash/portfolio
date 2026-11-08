@@ -6,7 +6,8 @@ import Footer from "../../components/footer";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import ToTopButton from "../../components/topBtn";
+import ToTopButton from "../../components/assets/topBtn";
+import { AlertProvider } from "@/src/context/alert";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,9 +55,11 @@ export default async function RootLayout({ children, params }: LayoutProps) {
     >
       <body className="min-h-full flex flex-col bg-[#02040a] overflow-x-hidden">
         <NextIntlClientProvider messages={messages}>
-          <Navbar />
-          {children}
-          <Footer />
+          <AlertProvider>
+            <Navbar />
+            {children}
+            <Footer />
+          </AlertProvider>
         </NextIntlClientProvider>
         <ToTopButton />
       </body>

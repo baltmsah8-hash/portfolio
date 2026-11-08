@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowUpRight } from "lucide-react";
 
@@ -26,7 +27,7 @@ const Contact = () => {
           {t("availability")}
         </div>
 
-        <h2 className="pt-6 text-2xl sm:text-5xl md:text-6xl font-black font-mono tracking-tight max-w-2xl bg-gradient-to-b from-white via-gray-200 to-gray-500 bg-clip-text text-transparent uppercase">
+        <h2 className="pt-6 text-2xl sm:text-5xl md:text-6xl font-black font-mono tracking-tight leading-normal max-w-2xl bg-gradient-to-b from-white via-gray-200 to-gray-500 bg-clip-text text-transparent uppercase">
           {t("title")}
         </h2>
 
@@ -35,13 +36,13 @@ const Contact = () => {
         </p>
 
         <div className="mt-2">
-          <a
-            href="mailto:your.email@example.com"
+          <Link
+            href="/profile"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-green-500 text-black font-bold font-mono text-sm hover:bg-transparent hover:text-green-400 border border-transparent hover:border-green-500/40 shadow-xl shadow-green-950/30 transition-all duration-300 group"
           >
             <span>{t("buttonText")}</span>
             <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </a>
+          </Link>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 mt-8 w-full border-t border-green-500/5 pt-8">

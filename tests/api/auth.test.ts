@@ -3,7 +3,7 @@ import { GET as getAllUsers } from "@/src/app/api/auth/all-users/route";
 import { POST as login } from "@/src/app/api/auth/login/route";
 import { POST as logout } from "@/src/app/api/auth/logout/route";
 import { POST as register } from "@/src/app/api/auth/register/route";
-import { PUT as update } from "@/src/app/api/auth/update/route";
+import { PUT as update } from "@/src/app/api/user/update/route";
 import bcrypt from "bcryptjs";
 import { ChatModel } from "@/src/models/chat.model";
 import { UserModel } from "@/src/models/user.model";
@@ -69,7 +69,7 @@ function createRequest(
 describe("Authentication API", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => { });
   });
 
   afterEach(() => {

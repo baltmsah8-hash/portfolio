@@ -13,16 +13,25 @@ const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
 
 const rateLimiter = (req: NextRequest) => {
     const { pathname } = req.nextUrl;
+    const method = req.method;
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
-    if (pathname === "/api/auth/login") {
+    const isLogin = pathname === "/api/auth/login";
+    const isProfileUpdate = pathname === "/api/user/profile" && method === "PUT";
+
+    if (isLogin || isProfileUpdate) {
         const now = Date.now();
+        const actionKey = isLogin ? `${ip}:login` : `${ip}:update`;
         const limitData = rateLimitMap.get(ip);
 
         if (limitData && now < limitData.expiresAt) {
-            if (limitData.count >= 5) {
+            const maxAttempts = isLogin ? 5 : 3;
+            if (limitData.count >= maxAttempts) {
+                const errorMsg = isLogin 
+                    ? "Too many login attempts. Please try again after a minute."
+                    : "Too many profile updates. Core system cooldown active.";
                 return NextResponse.json(
-                    { success: false, error: "Too many login attempts. Please try again after a minute." },
+                    { success: false, error: errorMsg },
                     { status: 429 }
                 );
             }
@@ -42,7 +51,12 @@ const authenticate = async (req: NextRequest, headers: Headers) => {
     const { pathname } = req.nextUrl;
     const token = req.cookies.get("token")?.value;
 
-    const isUserRoute = pathname.startsWith("/api/auth/update") || pathname.startsWith("/api/chat");
+    const isUserRoute =
+        pathname.includes("/profile") ||
+        pathname.startsWith("/api/auth/update") ||
+        pathname.startsWith("/api/chat") ||
+        pathname.startsWith("/api/auth/profile"); 
+
     const isAdminRoute = pathname.startsWith("/api/admin") || pathname.startsWith("/admin");
 
     if (isUserRoute || isAdminRoute) {
@@ -55,7 +69,7 @@ const authenticate = async (req: NextRequest, headers: Headers) => {
 
             headers.set("x-user-id", payload.userId as string);
             headers.set("x-user-role", payload.role as string);
-            
+
             return null;
         } catch (error) {
             return NextResponse.json({ success: false, error: "Unauthorized: Invalid token" }, { status: 401 });

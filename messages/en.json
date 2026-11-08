@@ -7,14 +7,12 @@
     "contact": "Contact",
     "connect": "Connect"
   },
-
   "Hero": {
     "titleFirst": "Full-Stack",
     "titleSecond": "& Mobile Developer",
     "description": "Creating the latest and most powerful websites and smart applications.\nUtilizing the newest and strongest tech-stack for an exceptional user experience.",
     "buttonText": "Explore My Work"
   },
-
   "Services": {
     "sectionTag": "SERVICES",
     "frontendTitle": "FRONT-END DEVELOPMENT",
@@ -26,24 +24,37 @@
     "fullstackTitle": "FULL-STACK DEVELOPMENT",
     "fullstackDesc": "Delivering cohesive full-stack web applications utilizing the MERN stack and Next.js. Deploying robust responsive designs interconnected with dynamic backend logic, secure databases, and continuous data structures."
   },
-
   "Technologies": {
     "sectionTag": "TECH STACK & TOOLS"
   },
-
   "Projects": {
-  "sectionTag": "Featured Projects",
-  "viewDetails": "View Details",
-  "liveLink": "Live Link"
-},
-
+    "sectionTag": "Featured Projects",
+    "viewDetails": "View Details",
+    "viewProjects": "View All Projects",
+    "liveLink": "Live Link",
+    "errorLoading": "Error Loading Projects",
+    "noProjects": "No projects found in this category yet",
+    "loadingDetails": "Loading project details...",
+    "backToProjects": "Back to projects archive",
+    "projectType": "STACK",
+    "publishDate": "DATE",
+    "sourceCode": "Source Code",
+    "techUsed": "TECH STACK TAGS",
+    "allProjectsTag": "Archive Works",
+    "filter": {
+      "all": "All",
+      "fullstack": "Full Stack",
+      "frontend": "Frontend",
+      "backend": "Backend",
+      "mobile": "Mobile Apps"
+    }
+  },
   "Contact": {
     "availability": "Available for New Projects",
     "title": "Have a project in mind?",
     "description": "Together, we can create something clear, highly performant, and impactful. Let's collaborate to inject our secure ideas to life through advanced technologies.",
     "buttonText": "Contact Me"
   },
-
   "Footer": {
     "ctaTitle": "LET'S BUILD SOMETHING UNIQUE Together",
     "ctaDesc": "Seeking an advanced Full-Stack solution or a highly customized mobile layout? Let's interconnect your dynamic idea into a production-ready application.",
@@ -55,6 +66,38 @@
     "linkProjects": "Projects",
     "linkTech": "Technologies",
     "socialsTitle": "CONNECTED_NETWORKS"
+  },
+  "Auth": {
+    "signInTitle": "Login",
+    "signUpTitle": "Sign Up",
+    "nameLabel": "Enter Full Name",
+    "emailLabel": "Enter Email",
+    "phoneLabel": "Enter Phone Number",
+    "passwordLabel": "Enter Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "signInBtn": "login",
+    "signUpBtn": "create account",
+    "loadingStatus": "Proccessing opration...",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "switchToSignUp": "Create New Account",
+    "switchToSignIn": "Login"
+  },
+  "Profile": {
+    "editBtn": "Edit Profile",
+    "nameLabel": "Full Name",
+    "phoneLabel": "Phone Number",
+    "emailLabel": "Email Address",
+    "joinLabel": "Joined Date",
+    "updateLabel": "Last Profile Update",
+    "saveBtn": "Save Changes",
+    "saving": "Saving Changes...",
+    "chatBtn": "Contact Admin (Chat)",
+    "logoutBtn": "Log Out"
+  },
+  "Chat": {
+    "adminTitle": "Admin Control - Customer Chat",
+    "userTitle": "Live Secure Support",
+    "placeholder": "Type your message here..."
   }
-
 }

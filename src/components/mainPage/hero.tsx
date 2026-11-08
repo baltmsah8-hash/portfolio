@@ -33,7 +33,7 @@ const Hero = () => {
 
           <div className="inline-block w-max">
             <h2
-              className={`text-2xl max-md:text-xl font-extrabold tracking-tight overflow-hidden whitespace-nowrap `}
+              className={`md:text-4xl max-md:text-xl font-extrabold tracking-tight overflow-hidden whitespace-nowrap `}
             >
               {t("titleFirst")}{" "}
               <span className="bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
@@ -61,7 +61,7 @@ const Hero = () => {
           className="text-2xl md:text-3xl bg-gradient-to-r from-gray-200 via-gray-400 to-gray-500 bg-clip-text text-transparent opacity-90 tracking-wide font-medium"
           style={{ fontFamily: "'Alex Brush', 'Great Vibes', cursive" }}
         >
-          Abdelrahman Hany
+          Abdelrhman Hany
         </h1>
       </div>
     </main>
