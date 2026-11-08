@@ -98,6 +98,7 @@
   "Chat": {
     "adminTitle": "Admin Control - Customer Chat",
     "userTitle": "Live Secure Support",
-    "placeholder": "Type your message here..."
+    "placeholder": "Type your message here...",
+    "shortMessageError": "Your message is too short (min 8 characters)"
   }
 }

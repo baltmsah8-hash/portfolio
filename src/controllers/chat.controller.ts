@@ -48,7 +48,6 @@ export const ChatController = {
         const { content, userId } = validData;
 
         const newMessage = {
-            id: crypto.randomUUID(),
             sender: "admin",
             content,
             isRead: true,
@@ -71,7 +70,7 @@ export const ChatController = {
         return { success: true, message: newMessage };
     }),
 
-    getChat: handleApi(async (body, req: NextRequest) => {
+    getChat: handleApi(async (req: NextRequest) => {
         await connectDB();
 
         const userId = req.nextUrl.searchParams.get('userId') ||

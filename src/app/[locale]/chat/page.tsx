@@ -9,7 +9,7 @@ import { Send, MessageSquare, ArrowLeft, Pin, Check } from "lucide-react";
 import Link from "next/link";
 
 interface SingleMessage {
-    id: string;
+    _id: string;
     sender: "user" | "admin";
     isReaded: boolean;
     content: string;
@@ -28,25 +28,22 @@ const ChatPage = () => {
     const targetCustomerId = searchParams.get("userId");
     const isAdminMode = !!targetCustomerId;
 
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesRef = useRef<HTMLDivElement>(null);
     const [messages, setMessages] = useState<SingleMessage[]>([]);
     const [inputMessage, setInputMessage] = useState("");
     const [chatLoading, setChatLoading] = useState(true);
 
-    // 1. 🌟 دالة جلب البيانات مع تحديث شروط الـ Response من الـ Controller بتاعك
     const loadChatLogs = async () => {
         try {
             const url = isAdminMode ? `/api/chat?userId=${targetCustomerId}` : `/api/chat`;
-            const res = await fetch(url, { 
+            const res = await fetch(url, {
                 method: "GET",
                 credentials: "include"
             });
             const data = await res.json();
-            console.log(data)
 
             if (data.success) {
                 setMessages(data.messages || []);
-                if (messages.length == 0) showAlert(isRtl ? "لا توجد رسائل لعرضها" : "No messages to show", "success")
 
             } else if (res.status === 401) {
                 router.push(`/${currentLocale}/auth`);
@@ -58,7 +55,6 @@ const ChatPage = () => {
         }
     };
 
-    // 2. 🌟 دالة التثبيت المنفصلة والمعزولة تماماً للأدمن
     const handleTogglePin = async (messageId: string, currentPinStatus: boolean) => {
         if (!isAdminMode || !targetCustomerId) return;
         try {
@@ -74,8 +70,8 @@ const ChatPage = () => {
             });
             const data = await res.json();
             if (data.success) {
-                setMessages((prev) => prev.map((msg) => msg.id === messageId ? { ...msg, isPinned: !currentPinStatus } : msg));
-                showAlert(t("pinSuccess") || "Pin protocol updated successfully.", "success");
+                setMessages((prev) => prev.map((msg) => msg._id === messageId ? { ...msg, isPinned: !currentPinStatus } : msg));
+                showAlert(isRtl ? "تم تثبيت الرساله" : "Pin protocol updated successfully.", "success");
             } else {
                 showAlert(data.error || "Failed to update pin protocol.", "error");
             }
@@ -84,7 +80,6 @@ const ChatPage = () => {
         }
     };
 
-    // 3. 🌟 دالة الإرسال المنفصلة والمعزولة تماماً (تتعامل مع الـ User والـ Admin)
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!inputMessage.trim()) return;
@@ -95,11 +90,14 @@ const ChatPage = () => {
         try {
             const res = await fetch(url, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify(payload),
                 credentials: "include"
             });
             const data = await res.json();
+            console.log(data)
 
             if (data.success && data.message) {
                 setMessages((prev) => [...prev, data.message]);
@@ -117,9 +115,19 @@ const ChatPage = () => {
         loadChatLogs();
     }, [isAdminMode, targetCustomerId, currentLocale, router]);
 
+        const scrollToBottom = () => {
+        if (messagesRef.current) {
+            messagesRef.current.scrollTo({
+                top: messagesRef.current.scrollHeight,
+                behavior: "smooth"
+            });
+        }
+    };
+
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        scrollToBottom();
     }, [messages]);
+
     return (
         <main className="relative min-h-screen w-full bg-[#02040a] text-white py-24 px-4 lg:px-8 flex items-center justify-center overflow-hidden" dir={isRtl ? "rtl" : "ltr"}>
             <div className="absolute top-10 left-1/4 w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
@@ -145,25 +153,31 @@ const ChatPage = () => {
                 {chatLoading ? (
                     <MessagesSkeleton />
                 ) : (
-                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 min-h-0 custom-scrollbar">
+                    <div 
+                    ref={messagesRef} 
+                    className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 min-h-0 custom-scrollbar">
                         {messages.map((msg) => {
                             const isMe = isAdminMode ? msg.sender === "admin" : msg.sender === "user";
 
                             return (
-                                <div key={msg.id} className={`flex flex-col ${isMe ? "items-end" : "items-start"} w-full group animate-in fade-in duration-200`}>
+                                <div key={msg._id} className={`flex flex-col ${isMe ? "items-end" : "items-start"} w-full group animate-in fade-in duration-200`}>
 
                                     <div className="flex items-center gap-2 max-w-[85%] sm:max-w-[75%] relative">
-                                        {/* ربط زر التثبيت بدالة الـ handleTogglePin المعزولة بالأعلى */}
                                         {isAdminMode && (
-                                            <button 
-                                                onClick={() => handleTogglePin(msg.id, msg.isPinned)}
-                                                className={`p-1.5 rounded-lg border transition-all duration-200 opacity-0 group-hover:opacity-100 cursor-pointer ${msg.isPinned ? "bg-green-500/20 border-green-500 text-green-400" : "bg-gray-900/60 border-gray-800 text-gray-400 hover:text-green-400"}`}
+                                            <button
+                                                onClick={() => handleTogglePin(msg._id, msg.isPinned)}
+                                                className={`p-1.5 rounded-lg border transition-all duration-200 opacity-0 group-hover:opacity-100 cursor-pointer 
+                                                    ${msg.isPinned ? "bg-green-500/20 border-green-500 text-green-400" : "bg-gray-900/60 border-gray-800 text-gray-400 hover:text-green-400"}`}
                                             >
                                                 <Pin className="w-3 h-3" />
                                             </button>
                                         )}
 
-                                        <div className={`px-5 py-3 rounded-2xl text-xs sm:text-sm shadow-xl break-words whitespace-pre-line flex flex-col gap-1.5 min-w-[70px] ${isMe ? "bg-green-500 text-black font-semibold rounded-br-none" : "bg-[#070a13]/80 border border-green-500/10 text-gray-200 rounded-bl-none"
+                                        <div className={`px-5 py-3 rounded-2xl text-xs sm:text-sm shadow-xl break-words whitespace-pre-line flex flex-col gap-1.5 min-w-[70px] 
+                                        ${isMe ? `bg-green-500 text-black font-semibold 
+                                        ${isRtl ? "rounded-bl-none" : "rounded-br-none"}` :
+                                                `bg-[#070a13]/80 border border-green-500/10 text-gray-200 
+                                        ${isRtl ? "rounded-br-none" : "rounded-bl-none"}`
                                             } ${msg.isPinned ? "ring-1 ring-green-400/40" : ""}`}>
 
                                             <span>{msg.content}</span>
@@ -184,11 +198,9 @@ const ChatPage = () => {
                                 </div>
                             );
                         })}
-                        <div ref={messagesEndRef} />
                     </div>
                 )}
 
-                {/* ربط الفورم بدالة الـ handleSendMessage المعزولة بالأعلى */}
                 <form onSubmit={handleSendMessage} className="p-4 border-t border-green-500/10 bg-[#070a13]/60 flex items-center gap-3 flex-shrink-0">
                     <input
                         type="text"
