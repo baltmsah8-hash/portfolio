@@ -10,7 +10,7 @@ import { ar, enUS } from "date-fns/locale";
 interface ChatsListProps {
     currentLocale: string;
     router: { push: (href: string) => void };
-    users: (UserData & { unreadCount?: number })[]; // تأمين وجود الحقل اختيارياً في الـ Type
+    users: (UserData & { unreadCount?: number })[];
     loading: boolean;
 }
 
@@ -58,7 +58,6 @@ const ChatsList = ({ currentLocale, router, users, loading }: ChatsListProps) =>
     return (
         <div className="w-full space-y-6">
 
-            {/* شريط البحث الفوري */}
             <div className="relative w-full z-10">
                 <div className="absolute inset-y-0 start-0 flex items-center ps-4 pointer-events-none text-gray-500">
                     <Search className="w-4 h-4" />
@@ -72,7 +71,6 @@ const ChatsList = ({ currentLocale, router, users, loading }: ChatsListProps) =>
                 />
             </div>
 
-            {/* عرض كروت العملاء */}
             <div className="w-full space-y-5 custom-scrollbar py-6">
                 {filteredUsers.length === 0 ? (
                     <div className="p-8 text-center text-gray-500 font-mono text-xs border border-dashed border-gray-800 rounded-2xl uppercase tracking-wider">
@@ -85,7 +83,6 @@ const ChatsList = ({ currentLocale, router, users, loading }: ChatsListProps) =>
                             onClick={() => handleOpenChat(user._id)}
                             className="w-full bg-[#070a13]/40 border border-green-500/10 hover:border-green-500/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 cursor-pointer group hover:-translate-y-0.5 shadow-xl shadow-black/40 relative"
                         >
-                            {/* 🌟 الإضافة الوحيدة: بادج عدد الرسائل غير المقروءة فوق الكارت */}
                             {user.unreadCount && user.unreadCount > 0 ? (
                                 <span 
                                     className={`absolute -top-2.5 z-20 px-2.5 py-0.5 rounded-full bg-green-500 text-black font-mono text-[11px] font-black shadow-[0_0_12px_rgba(34,197,94,0.6)] animate-pulse ${
@@ -96,7 +93,6 @@ const ChatsList = ({ currentLocale, router, users, loading }: ChatsListProps) =>
                                 </span>
                             ) : null}
 
-                            {/* جهة البيانات والأفاتار */}
                             <div className="flex items-center gap-4 min-w-0">
                                 <div className="w-12 h-12 rounded-full bg-[#02040a] border border-green-500/20 group-hover:border-green-400 transition-colors flex items-center justify-center text-green-400 font-mono font-bold text-lg shadow-inner">
                                     {user.name.charAt(0).toUpperCase()}
@@ -114,7 +110,6 @@ const ChatsList = ({ currentLocale, router, users, loading }: ChatsListProps) =>
                                 </div>
                             </div>
 
-                            {/* جهة مؤشر المزامنة على اليمين */}
                             <div className="flex items-center justify-end flex-shrink-0 self-end sm:self-center">
                                 <span className="text-[9px] font-mono text-gray-600 uppercase tracking-widest px-2.5 py-1 rounded-md bg-gray-950/40 border border-gray-900">
                                     SECURE_LINK

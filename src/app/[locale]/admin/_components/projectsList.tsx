@@ -26,12 +26,10 @@ export const ProjectsList = ({ t, showAlert, isRtl }: ProjectsListProps) => {
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  
-  // 🌟 States خاصة بنافذة التعديل المنبثقة (Edit Modal)
+
   const [editingProject, setEditingProject] = useState<ProjectItem | null>(null);
   const [updating, setUpdating] = useState(false);
 
-  // 1. دالة جلب المشاريع من الباك-إند
   const fetchProjects = async () => {
     try {
       const res = await fetch(`/api/projects`, { credentials: "include" });
@@ -46,14 +44,12 @@ export const ProjectsList = ({ t, showAlert, isRtl }: ProjectsListProps) => {
     }
   };
 
-  
-  // 2. دالة حذف المشروع عبر DELETE /api/projects/manage
   const handleDeleteProject = async (projectId: string) => {
     try {
       const res = await fetch(`/api/admin/projects/manage/`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: projectId }), // تأكد لو الباك اند بيقرأ id أو projectId
+        body: JSON.stringify({ id: projectId }),
         credentials: "include",
       });
       const data = await res.json();
@@ -100,8 +96,6 @@ export const ProjectsList = ({ t, showAlert, isRtl }: ProjectsListProps) => {
   
   const filteredProjects = projects.filter((project: any) => {
     const query = searchQuery.toLowerCase().trim();
-    
-    // قراءة العنوان بأمان سواء راجع مترجم جاهز أو مقسم
     const title = isRtl 
       ? (project.title_ar || project.title || "") 
       : (project.title_en || project.title || "");
@@ -202,7 +196,6 @@ export const ProjectsList = ({ t, showAlert, isRtl }: ProjectsListProps) => {
         )}
       </div>
 
-      {/* 🌟 نافذة التعديل السريعة (Edit Modal) */}
       {editingProject && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <form onSubmit={handleUpdateProject} className="max-w-lg w-full bg-[#070a13] border border-green-500/20 rounded-3xl p-6 space-y-4 shadow-2xl">

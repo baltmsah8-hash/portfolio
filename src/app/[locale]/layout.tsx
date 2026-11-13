@@ -66,7 +66,7 @@ export default async function RootLayout({ children, params }: LayoutProps) {
     <html
       lang={locale}
       dir={direction}
-      className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} ${alexBrush.variable} h-full antialiased overflow-x-hidden scroll-smooth`}
+      className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} ${alexBrush.variable} bg-[#02040a] h-full antialiased overflow-x-hidden scroll-smooth`}
     >
       <head>
         <link rel="preconnect" href="https://spline.design" />

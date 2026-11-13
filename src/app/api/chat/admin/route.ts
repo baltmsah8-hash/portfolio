@@ -11,5 +11,5 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    return ChatController.sendFromAdmin(body);
+    return ChatController.sendFromAdmin(body, req);
 }

@@ -4,8 +4,8 @@
     "services": "Services",
     "projects": "Projects",
     "technologies": "Technologies",
-    "contact": "Start Now",
-    "connect": "Contact Me"
+    "connect": "Start Now",
+    "contact": "Contact Me"
   },
   "Hero": {
     "titleFirst": "Full-Stack",
@@ -52,7 +52,7 @@
   },
   "Contact": {
     "availability": "Available for new projects",
-    "title": "Have a project idea you want to bring to life?",
+    "title": "Turn Your Vision Into Production-Ready Code",
     "description": "Together, we can build clean, high-performing, and scalable digital products. Reach out to discuss your requirements and turn your idea into reality.",
     "buttonText": "Contact Me Now"
   },

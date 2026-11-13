@@ -65,24 +65,38 @@ const rateLimiter = (req: NextRequest) => {
 };
 
 
-const JWT_SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET || ""
-);
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined");
+}
+
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 const authenticate = async (req: NextRequest, requestHeaders: Headers) => {
     const { pathname } = req.nextUrl;
+
+    requestHeaders.delete("x-user-id");
+    requestHeaders.delete("x-user-role");
+
     const token = req.cookies.get("token")?.value;
 
     const isUserRoute =
         pathname.includes("/profile") ||
-        pathname.startsWith("/api/user/profile") ||
+        pathname.includes("/chat") ||
+        pathname.startsWith("/api/user") ||
         pathname.startsWith("/api/chat");
 
-    const isAdminRoute = pathname.startsWith("/api/admin") || pathname.includes("/admin");
+    const isAdminRoute =
+        pathname.startsWith("/api/admin") ||
+        pathname.includes("/admin");
 
     if (isUserRoute || isAdminRoute) {
+        const isApi = pathname.startsWith("/api");
+        const locale = pathname.split("/")[1] === "ar" ? "ar" : "en";
+
         if (!token) {
-            return NextResponse.json({ success: false, error: "Unauthorized: Token missing" }, { status: 401 });
+            return isApi
+                ? NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+                : NextResponse.redirect(new URL(`/${locale}/auth`, req.url));
         }
 
         try {
@@ -92,8 +106,13 @@ const authenticate = async (req: NextRequest, requestHeaders: Headers) => {
             requestHeaders.set("x-user-role", payload.role as string);
 
             return null;
-        } catch (error) {
-            return NextResponse.json({ success: false, error: "Unauthorized: Invalid token" }, { status: 401 });
+        } catch {
+            const res = isApi
+                ? NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 })
+                : NextResponse.redirect(new URL(`/${locale}/auth`, req.url));
+            
+            res.cookies.delete("token");
+            return res;
         }
     }
 
@@ -102,16 +121,35 @@ const authenticate = async (req: NextRequest, requestHeaders: Headers) => {
 
 const authorize = (request: NextRequest, requestHeaders: Headers) => {
     const { pathname } = request.nextUrl;
-    const isAdminRoute = pathname.startsWith("/api/admin") || pathname.startsWith("/admin");
+    const method = request.method;
+    const userRole = requestHeaders.get("x-user-role");
+    const isApi = pathname.startsWith("/api");
+    const locale = pathname.split("/")[1] === "en" ? "en" : "ar";
 
-    if (isAdminRoute) {
-        const userRole = requestHeaders.get("x-user-role");
+    const isAdminRoute =
+        pathname.startsWith("/api/admin") ||
+        /^\/(en|ar)\/admin(\/|$)/.test(pathname);
 
+    const isProjectMutation =
+        pathname.startsWith("/api/projects") && method !== "GET";
+
+    if (isAdminRoute || isProjectMutation) {
         if (userRole !== "admin") {
-            return NextResponse.json({ success: false, error: "Forbidden: Admin access required" }, { status: 403 });
+            return isApi
+                ? NextResponse.json({ success: false, error: "Forbidden: Admin access required" }, { status: 403 })
+                : NextResponse.redirect(new URL(`/${locale}`, request.url));
         }
     }
 
+    const isStrictUserRoute =
+        pathname.startsWith("/api/user") ||
+        /^\/(en|ar)\/profile(\/|$)/.test(pathname);
+
+    if (isStrictUserRoute && userRole !== "user") {
+        return isApi
+            ? NextResponse.json({ success: false, error: "Forbidden: User access required" }, { status: 403 })
+            : NextResponse.redirect(new URL(userRole === "admin" ? `/${locale}/admin` : `/${locale}/auth`, request.url));
+    }
 
     return null;
 };
@@ -144,5 +182,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+    matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };

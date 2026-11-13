@@ -140,35 +140,57 @@ export const ChatController = {
         return { success: true };
     }),
 
-    cleanupOldMessages: handleApi(async (body, req: NextRequest) => {
-        await connectDB();
+cleanupOldMessages: handleApi(async (body, req: NextRequest) => {
+    await connectDB();
 
-        const authHeader = req.headers.get("authorization");
+    const authHeader = req.headers.get("authorization");
 
-        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-            throw new AppError("Unauthorized Cron Trigger", 401);
+    if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        throw new AppError("Unauthorized Cron Trigger", 401);
+    }
+
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const result = await ChatModel.updateMany(
+        {},
+        {
+            $pull: {
+                messages: {
+                    createdAt: { $lt: oneWeekAgo },
+                    isPinned: false,
+                },
+            },
         }
+    );
 
-        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    await ChatModel.updateMany({}, [
+        {
+            $set: {
+                unreadCount: {
+                    $size: {
+                        $filter: {
+                            input: "$messages",
+                            as: "msg",
+                            cond: {
+                                $and: [
+                                    { $eq: ["$$msg.sender", "user"] },
+                                    { $eq: ["$$msg.isReaded", false] },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    ]);
 
-        const result = await ChatModel.updateMany(
-            {},
-            {
-                $pull: {
-                    messages: {
-                        createdAt: { $lt: oneWeekAgo },
-                        isPinned: false
-                    }
-                }
-            }
-        );
+    return {
+        success: true,
+        message: "Old messages cleaned up successfully",
+        affectedRows: result.modifiedCount,
+    };
+}),
 
-        return {
-            success: true,
-            message: "Old messages cleaned up successfully",
-            affectedRows: result.modifiedCount
-        };
-    }),
 
     pinMessage: handleApi(async (body, req: NextRequest) => {
         await connectDB();

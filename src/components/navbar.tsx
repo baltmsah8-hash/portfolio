@@ -86,15 +86,14 @@ export default function Navbar() {
             </button>
 
             {!isAdmin && (
-              <Link href={`/${currentLocale}/contact`} className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium rounded-full group bg-gradient-to-br from-green-500 to-teal-500 text-green-400 focus:ring-4 focus:outline-none focus:ring-green-900">
+              <Link href={`/${currentLocale}/profile`} className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium rounded-full group bg-gradient-to-br from-green-500 to-teal-500 text-green-400 focus:ring-4 focus:outline-none focus:ring-green-900">
                 <span className="relative px-5 py-2 transition-all ease-in duration-75 bg-[#02040a] rounded-full group-hover:bg-opacity-50 group-hover:text-white font-bold">
-                  {t("connect")}
+                  {t("contact")}
                 </span>
               </Link>
             )}
           </div>
 
-          {/* أزرار الموبايل: لو في الـ Dashboard تكتفي بزر اللغة فقط وتلغي زر الـ Menu */}
           <div className="flex w-max md:hidden items-center gap-3">
             <button onClick={toggleLanguage} className="p-2 rounded-full bg-green-950/20 border border-green-500/20 text-green-400">
               <Globe className="w-4 h-4" />
@@ -123,7 +122,7 @@ export default function Navbar() {
           })}
           <div className="pt-4 border-t border-green-500/10">
             <Link href={`/${currentLocale}/profile`} onClick={() => setIsOpen(false)} className="block w-full text-center py-3 px-5 rounded-xl bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold transition-all shadow-lg shadow-green-950/30">
-              {t("connect")}
+              {t("contact")}
             </Link>
           </div>
         </div>

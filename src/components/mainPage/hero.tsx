@@ -2,6 +2,7 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
 
 const Robot3D = dynamic(() => import("@splinetool/react-spline"), {
   ssr: false,
@@ -51,9 +52,11 @@ const Hero = () => {
           </p>
 
           <div className="mt-4 pointer-events-auto">
-            <button className="px-6 py-3 rounded-full bg-green-500/5 border border-green-500/20 hover:bg-green-500/20 hover:border-green-400 transition-all duration-300 font-medium text-sm backdrop-blur-sm cursor-pointer shadow-lg shadow-green-950/20 text-green-400">
+            <Link 
+            href={`/${currentLocale}/products`} 
+            className="px-6 py-3 rounded-full bg-green-500/5 border border-green-500/20 hover:bg-green-500/20 hover:border-green-400 transition-all duration-300 font-medium text-sm backdrop-blur-sm cursor-pointer shadow-lg shadow-green-950/20 text-green-400">
               {t("buttonText")}
-            </button>
+            </Link>
           </div>
         </div>
       </div>

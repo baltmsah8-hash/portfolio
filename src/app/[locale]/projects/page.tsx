@@ -59,12 +59,10 @@ const AllProjectsPage = () => {
             className="w-full min-h-screen bg-[#02040a] text-white py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
             dir={isRtl ? "rtl" : "ltr"}
         >
-            {/* إضاءة خلفية */}
             <div className="absolute top-20 right-10 w-[400px] h-[400px] bg-green-500/[0.02] rounded-full blur-[150px] pointer-events-none" />
             <div className="absolute bottom-20 left-10 w-[300px] h-[300px] bg-emerald-500/[0.03] rounded-full blur-[130px] pointer-events-none" />
 
             <div className="max-w-5xl mx-auto relative z-10">
-                {/* الهيدر مع زر الرجوع */}
                 <div className="mb-10 flex items-center justify-between">
                     <div className="font-mono text-xs md:text-sm tracking-widest text-green-500/60 uppercase flex items-center gap-2">
                         <span>{"//"}</span>
@@ -80,7 +78,6 @@ const AllProjectsPage = () => {
                     </Link>
                 </div>
 
-                {/* شريط الفلاتر مع العداد */}
                 <div
                     className="flex flex-wrap gap-2.5 mb-12 border-b border-green-500/10 pb-6 justify-start"
                     dir={isRtl ? "rtl" : "ltr"}
@@ -114,7 +111,6 @@ const AllProjectsPage = () => {
                     })}
                 </div>
 
-                {/* شبكة عرض المشاريع */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                     {loading && <ProjectSkeleton count={6} />}
 

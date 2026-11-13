@@ -39,7 +39,7 @@ const Footer = () => {
       <div className="max-w-5xl mx-auto flex flex-col gap-12 relative z-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-green-500/10 pb-10">
           <div className="max-w-md">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold font-mono tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-green-400">
+            <h2 className="text-xl sm:text-2xl md:text-3xl py-4 font-bold font-mono tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-green-400">
               {t("ctaTitle")}
             </h2>
             <p className="mt-2 text-gray-400 text-xs sm:text-sm leading-relaxed">

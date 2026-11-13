@@ -27,7 +27,7 @@ const Contact = () => {
           {t("availability")}
         </div>
 
-        <h2 className="pt-6 text-2xl sm:text-5xl md:text-6xl font-black font-mono tracking-tight leading-normal max-w-2xl bg-gradient-to-b from-white via-gray-200 to-gray-500 bg-clip-text text-transparent uppercase">
+        <h2 className="py-4 text-2xl sm:text-5xl md:text-6xl font-black font-mono tracking-tight leading-normal max-w-2xl bg-gradient-to-b from-white via-gray-200 to-gray-500 bg-clip-text text-transparent uppercase">
           {t("title")}
         </h2>
 

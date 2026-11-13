@@ -109,9 +109,8 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="w-full bg-[#02040a] text-white flex pt-20 h-[calc(100vh-50px)] overflow-hidden select-none relative" dir={isRtl ? "rtl" : "ltr"}>
+    <div className="w-full bg-[#02040a] text-white flex pt-20 h-[calc(100vh-45px)] overflow-hidden select-none relative" dir={isRtl ? "rtl" : "ltr"}>
 
-      {/* تمرير totalUnread للسايد بار */}
       <Sidebar
         currentView={currentView}
         setCurrentView={setCurrentView}
