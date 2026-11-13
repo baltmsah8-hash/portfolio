@@ -16,7 +16,7 @@ export const authController = {
         const validData = LoginSchema.parse(body);
         const { email, password } = validData;
 
-        const user = await UserModel.findOne({ email: email.toLowerCase() });
+        const user = await UserModel.findOne({ email: email.toLowerCase() }).lean();
         if (!user) {
             throw new AppError("Error on email or password", 401);
         }
@@ -26,9 +26,13 @@ export const authController = {
             throw new AppError("Error on email or password", 401);
         };
 
+        const isAdmin = user.role === "admin";
+        const maxAge = isAdmin ? 60 * 60 * 24 : 60 * 60 * 24 * 7;
+        const jwtExpiration = isAdmin ? "1d" : "7d";
+
         const token = await new jose.SignJWT({ userId: user._id.toString(), role: user.role })
             .setProtectedHeader({ alg: "HS256" })
-            .setExpirationTime("7d")
+            .setExpirationTime(jwtExpiration)
             .sign(JWT_SECRET);
 
         const response = NextResponse.json({ success: true, role: user.role });
@@ -37,7 +41,7 @@ export const authController = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
-            maxAge: 60 * 60 * 24 * 7,
+            maxAge,
             path: "/",
         });
 
@@ -49,7 +53,7 @@ export const authController = {
         const validData = RegisterSchema.parse(body);
         const { name, email, phone, password } = validData;
 
-        const userExists = await UserModel.findOne({ email: email.toLowerCase() });
+        const userExists = await UserModel.exists({ email: email.toLowerCase() });
         if (userExists) {
             throw new AppError("Email is already exist", 409);
         }
@@ -89,11 +93,11 @@ export const authController = {
         const validData = UpdateSchema.parse(body);
         const { name, email, phone } = validData;
 
-            const userId = req.headers.get("x-user-id");
-            
-            if (!userId) {
-                return NextResponse.json({ success: false, error: "User identity mising" }, { status: 401 });
-            }
+        const userId = req.headers.get("x-user-id");
+
+        if (!userId) {
+            return NextResponse.json({ success: false, error: "User identity mising" }, { status: 401 });
+        }
 
         const updateData: { name?: string; phone?: string } = {};
 
@@ -104,7 +108,7 @@ export const authController = {
             { email: email.toLowerCase() },
             { $set: updateData },
             { new: true }
-        ).select("-password");
+        ).select("-password").lean();
 
         if (!updatedUser) {
             throw new AppError("User not found", 404);
@@ -121,7 +125,7 @@ export const authController = {
             return NextResponse.json({ success: false, error: "User identity mising" }, { status: 401 });
         }
 
-        const user = await UserModel.findById(userId).select("-password");
+        const user = await UserModel.findById(userId).select("-password").lean();
         if (!user) {
             throw new AppError("User not found", 404);
         }
@@ -146,7 +150,20 @@ export const authController = {
             }
         ]);
 
-        const users = await UserModel.find({});
+        const usersUnReadMasseges = await ChatModel.find({}).select("unreadCount userId").lean();
+
+        const users = await UserModel.find({ role: { $ne: "admin" } }).select("-password").lean();
+
+        const mapMessages = new Map(usersUnReadMasseges.map(msg => [msg.userId.toString(), msg]));
+
+        for (const user of users) {
+            const matchedId = mapMessages.get(user._id.toString());
+
+            if (matchedId) {
+                user.unreadCount = matchedId.unreadCount;
+            }
+        };
+
         return { success: true, data: users, unReadedMessages: unReadedCount };
     }),
 

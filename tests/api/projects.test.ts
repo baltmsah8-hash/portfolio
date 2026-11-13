@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { DELETE, PUT } from "@/src/app/api/projects/manage/route";
+import { DELETE, PUT } from "@/src/app/api/admin/projects/manage/route";
 import { GET, POST } from "@/src/app/api/projects/route";
 import { ProjectModel } from "@/src/models/project.model";
 import { v2 as cloudinary } from "cloudinary";
@@ -57,7 +57,7 @@ function createRequest(
 describe("Project API", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => { });
   });
 
   afterEach(() => {

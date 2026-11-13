@@ -9,8 +9,8 @@ import RegisterForm from "@/src/components/auth/registerForm";
 
 export default function AuthPage() {
   const t = useTranslations("Auth");
-  const locale = useLocale();
-  const isRtl = locale === "ar";
+  const currentLocale = useLocale();
+  const isRtl = currentLocale === "ar";
   const router = useRouter();
   
   const [isLogin, setIsLogin] = useState<boolean>(true);
@@ -35,9 +35,9 @@ export default function AuthPage() {
       }
 
       if (result.role === "admin") {
-        router.push("/admin");
+        router.push(`/${currentLocale}/admin`);
       } else {
-        router.push("/profile");
+        router.push(`/${currentLocale}/profile`);
       }
 
     } catch (err: unknown) {

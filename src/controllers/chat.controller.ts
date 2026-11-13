@@ -9,9 +9,7 @@ import { NextRequest } from "next/server";
 export const ChatController = {
     sendFromUser: handleApi(async (body, req: NextRequest) => {
         await connectDB();
-
-        const validData = userMessageSchema.parse(body);
-        const { content } = validData;
+        const { content } = userMessageSchema.parse(body);
 
         const userId = req.headers.get("x-user-id");
         if (!userId) throw new AppError("Unauthorized: User identity missing", 401);
@@ -20,51 +18,51 @@ export const ChatController = {
             id: crypto.randomUUID(),
             sender: "user",
             content,
-            isRead: false,
-            createdAt: new Date()
+            isReaded: false,
+            createdAt: new Date(),
         };
 
         await ChatModel.findOneAndUpdate(
             { userId },
             {
                 $push: { messages: newMessage },
-                $inc: { unreadCount: 1 }
+                $inc: { unreadCount: 1 },
             },
             { new: true, upsert: true }
-        );
+        ).lean();
 
         await pusherServer.trigger(`chat-${userId}`, "new-message", {
             sender: "user",
-            message: newMessage
+            message: newMessage,
         });
 
         return { success: true, message: newMessage };
     }),
 
-    sendFromAdmin: handleApi(async (body) => {
+    sendFromAdmin: handleApi(async (body, req: NextRequest) => {
         await connectDB();
+        const role = req.headers.get("x-user-role");
+        if (role !== "admin") throw new AppError("Forbidden", 403);
 
-        const validData = adminMessageSchema.parse(body);
-        const { content, userId } = validData;
+        const { content, userId } = adminMessageSchema.parse(body);
 
         const newMessage = {
+            id: crypto.randomUUID(),
             sender: "admin",
             content,
-            isRead: true,
-            createdAt: new Date()
+            isReaded: false,
+            createdAt: new Date(),
         };
 
         await ChatModel.findOneAndUpdate(
             { userId },
-            {
-                $push: { messages: newMessage }
-            },
+            { $push: { messages: newMessage } },
             { new: true, upsert: true }
-        );
+        ).lean();
 
         await pusherServer.trigger(`chat-${userId}`, "new-message", {
             sender: "admin",
-            message: newMessage
+            message: newMessage,
         });
 
         return { success: true, message: newMessage };
@@ -73,51 +71,73 @@ export const ChatController = {
     getChat: handleApi(async (req: NextRequest) => {
         await connectDB();
 
-        const userId = req.nextUrl.searchParams.get('userId') ||
-            req.headers.get("x-user-id");
+        const role = req.headers.get("x-user-role");
+        const headerUserId = req.headers.get("x-user-id");
+        const queryUserId = req.nextUrl.searchParams.get("userId");
 
-        if (!userId) {
-            throw new AppError("User identity missing", 401);
+        const targetUserId = role === "admin" ? queryUserId : headerUserId;
+        if (!targetUserId) throw new AppError("User identity missing", 400);
+
+        const otherSender = role === "admin" ? "user" : "admin";
+
+        const updateQuery: { $set: Record<string, boolean | number> } = {
+            $set: { "messages.$[msg].isReaded": true },
+        };
+        if (role === "admin") {
+            updateQuery.$set.unreadCount = 0;
         }
 
-        const chat = await ChatModel.findOne({ userId }).select("messages unreadCount");
-        if (!chat) return { success: true, messages: [] };
+        const chat = await ChatModel.findOneAndUpdate(
+            { userId: targetUserId },
+            updateQuery,
+            {
+                arrayFilters: [{ "msg.sender": otherSender, "msg.isReaded": false }],
+                new: true,
+            }
+        )
+            .select("messages unreadCount")
+            .lean();
 
-        return { success: true, messages: chat.messages };
+        if (!chat) return { success: true, messages: [], userId: targetUserId };
+
+        await pusherServer.trigger(`chat-${targetUserId}`, "messages-read", {
+            readBy: role,
+        });
+
+        return { success: true, messages: chat.messages, userId: targetUserId };
     }),
 
-    markAsRead: handleApi(async (body, req: NextRequest) => {
+    markAsRead: handleApi(async (body: { userId?: string }, req: NextRequest) => {
         await connectDB();
 
         const role = req.headers.get("x-user-role");
-        const userId = req.headers.get("x-user-id");
+        const headerUserId = req.headers.get("x-user-id");
 
-        if (!userId) throw new AppError("User ID is required for admin", 400);
+        const targetUserId = role === "admin" ? body.userId : headerUserId;
+        if (!targetUserId) throw new AppError("Target User ID is required", 400);
 
+        const otherSender = role === "admin" ? "user" : "admin";
+
+        const updateQuery: { $set: Record<string, boolean | number> } = {
+            $set: { "messages.$[msg].isReaded": true },
+        };
         if (role === "admin") {
-            await ChatModel.findOneAndUpdate(
-                { userId },
-                {
-                    $set: {
-                        unreadCount: 0,
-                        "messages.$[msg].isRead": true
-                    }
-                },
-                {
-                    arrayFilters: [{ "msg.sender": "user" }]
-                }
-            );
-        } else {
-            await ChatModel.findOneAndUpdate(
-                { userId: userId },
-                {
-                    $set: { "messages.$[msg].isRead": true }
-                },
-                { arrayFilters: [{ "msg.sender": "admin" }] }
-            );
+            updateQuery.$set.unreadCount = 0;
         }
 
-        return { success: true, message: "Chat marked as read successfully" };
+        await ChatModel.findOneAndUpdate(
+            { userId: targetUserId },
+            updateQuery,
+            {
+                arrayFilters: [{ "msg.sender": otherSender, "msg.isReaded": false }],
+            }
+        );
+
+        await pusherServer.trigger(`chat-${targetUserId}`, "messages-read", {
+            readBy: role,
+        });
+
+        return { success: true };
     }),
 
     cleanupOldMessages: handleApi(async (body, req: NextRequest) => {
@@ -163,9 +183,9 @@ export const ChatController = {
         if (!userId || !messageId) throw new AppError("userId and messageId are required", 400);
 
         const updatedChat = await ChatModel.findOneAndUpdate(
-            { userId, "messages.id": messageId },
+            { userId, "messages._id": messageId },
             { $set: { "messages.$[msg].isPinned": pinStatus ?? true } },
-            { arrayFilters: [{ "msg.id": messageId }], new: true }
+            { arrayFilters: [{ "msg._id": messageId }], new: true }
         );
 
         if (!updatedChat) throw new AppError("Message or Chat not found", 404);

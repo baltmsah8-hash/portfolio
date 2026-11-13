@@ -122,7 +122,7 @@ const ProfilePage = () => {
             if (data.success) {
                 router.push(`/${currentLocale}/auth`);
             } else {
-                alert(data.error);
+                showAlert(isRtl ? "حدث خطأ اثناء تسجيل الخروج" : "Error during logout", "error");
             }
         } catch (err) {
             console.error(err);

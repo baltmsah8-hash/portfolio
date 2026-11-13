@@ -19,7 +19,7 @@ const getPublicIdFromUrl = (url: string): string | null => {
 
         const removeVersion = parts[1].substring(parts[1].indexOf("/") + 1);
         const publicId = removeVersion.split(".")[0];
-        
+
         return publicId;
     } catch (error) {
         return null;
@@ -57,14 +57,14 @@ export const ProjectController = {
 
     getAll: handleApi(async () => {
         await connectDB();
-        const projects = await ProjectModel.find({}).sort({ createdAt: -1 });
+        const projects = await ProjectModel.find({}).sort({ createdAt: -1 }).lean();
         return { success: true, data: projects };
     }),
 
     getProject: handleApi(async (id: string) => {
         await connectDB();
 
-        const project = await ProjectModel.findById(id);
+        const project = await ProjectModel.findById(id).lean();
         if (!project) {
             throw new AppError("Project not found", 404);
         }
@@ -79,7 +79,7 @@ export const ProjectController = {
             throw new AppError("Forbidden: Admin access required", 403);
         }
 
-        const { id, ...updateData } = body as { id?: string; [key: string]: unknown };
+        const { id, ...updateData } = body as { id?: string;[key: string]: unknown };
         if (!id) throw new AppError("Project ID is required", 400);
 
         const validData = projectValidatorSchema.parse(updateData);
@@ -88,7 +88,7 @@ export const ProjectController = {
             id,
             { $set: validData },
             { new: true }
-        );
+        ).lean();
 
         if (!updatedProject) {
             throw new AppError("Project not found", 404);
@@ -123,5 +123,28 @@ export const ProjectController = {
         await ProjectModel.findByIdAndDelete(id);
 
         return { success: true, message: "Project and its cloud images deleted successfully" };
+    }),
+
+    deleteImage: handleApi(async (body, req: NextRequest) => {
+        const role = req.headers.get("x-user-role");
+        if (role !== "admin") throw new AppError("Forbidden: Admin access required", 403);
+
+        const { imageUrl } = body as { imageUrl?: string };
+        if (!imageUrl) {
+            throw new AppError("Image URL is required", 400);
+        }
+
+        const publicId = getPublicIdFromUrl(imageUrl);
+        if (!publicId) {
+            throw new AppError("Invalid Cloudinary URL format", 400);
+        }
+
+        const result = await cloudinary.uploader.destroy(publicId);
+
+        if (result.result !== "ok" && result.result !== "not found") {
+            throw new AppError("Failed to delete image from Cloudinary", 500);
+        }
+
+        return { success: true, message: "Image deleted successfully" };
     })
 };

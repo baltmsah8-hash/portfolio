@@ -37,7 +37,7 @@ const Contact = () => {
 
         <div className="mt-2">
           <Link
-            href="/profile"
+            href={`/${currentLocale}/chat`}
             className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-green-500 text-black font-bold font-mono text-sm hover:bg-transparent hover:text-green-400 border border-transparent hover:border-green-500/40 shadow-xl shadow-green-950/30 transition-all duration-300 group"
           >
             <span>{t("buttonText")}</span>

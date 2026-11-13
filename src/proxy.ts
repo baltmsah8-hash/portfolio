@@ -11,53 +11,74 @@ const intlMiddleware = createMiddleware({
 
 const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
 
+const RATE_LIMIT_RULES: Record<string, { max: number; windowMs: number; message: string }> = {
+    "POST:/api/auth/login": {
+        max: 5,
+        windowMs: 60 * 1000,
+        message: "Too many login attempts. Please try again after a minute.",
+    },
+    "PUT:/api/user/profile": {
+        max: 3,
+        windowMs: 60 * 1000,
+        message: "Too many profile updates. Core system cooldown active.",
+    },
+    "POST:/api/chat/user": {
+        max: 20,
+        windowMs: 60 * 1000,
+        message: "Message rate limit exceeded. Please slow down.",
+    },
+};
+
 const rateLimiter = (req: NextRequest) => {
     const { pathname } = req.nextUrl;
     const method = req.method;
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const routeKey = `${method}:${pathname}`;
 
-    const isLogin = pathname === "/api/auth/login";
-    const isProfileUpdate = pathname === "/api/user/profile" && method === "PUT";
+    const rule = RATE_LIMIT_RULES[routeKey];
+    if (!rule) return null;
 
-    if (isLogin || isProfileUpdate) {
-        const now = Date.now();
-        const actionKey = isLogin ? `${ip}:login` : `${ip}:update`;
-        const limitData = rateLimitMap.get(ip);
+    const now = Date.now();
 
-        if (limitData && now < limitData.expiresAt) {
-            const maxAttempts = isLogin ? 5 : 3;
-            if (limitData.count >= maxAttempts) {
-                const errorMsg = isLogin 
-                    ? "Too many login attempts. Please try again after a minute."
-                    : "Too many profile updates. Core system cooldown active.";
-                return NextResponse.json(
-                    { success: false, error: errorMsg },
-                    { status: 429 }
-                );
-            }
-            limitData.count++;
-        } else {
-            rateLimitMap.set(ip, { count: 1, expiresAt: now + 60 * 1000 });
+    if (rateLimitMap.size > 5000) {
+        for (const [key, value] of rateLimitMap.entries()) {
+            if (now > value.expiresAt) rateLimitMap.delete(key);
         }
     }
+
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const actionKey = `${ip}:${routeKey}`;
+    const limitData = rateLimitMap.get(actionKey);
+
+    if (limitData && now < limitData.expiresAt) {
+        if (limitData.count >= rule.max) {
+            return NextResponse.json(
+                { success: false, error: rule.message },
+                { status: 429 }
+            );
+        }
+        limitData.count++;
+    } else {
+        rateLimitMap.set(actionKey, { count: 1, expiresAt: now + rule.windowMs });
+    }
+
     return null;
 };
+
 
 const JWT_SECRET = new TextEncoder().encode(
     process.env.JWT_SECRET || ""
 );
 
-const authenticate = async (req: NextRequest, headers: Headers) => {
+const authenticate = async (req: NextRequest, requestHeaders: Headers) => {
     const { pathname } = req.nextUrl;
     const token = req.cookies.get("token")?.value;
 
     const isUserRoute =
         pathname.includes("/profile") ||
-        pathname.startsWith("/api/auth/update") ||
-        pathname.startsWith("/api/chat") ||
-        pathname.startsWith("/api/auth/profile"); 
+        pathname.startsWith("/api/user/profile") ||
+        pathname.startsWith("/api/chat");
 
-    const isAdminRoute = pathname.startsWith("/api/admin") || pathname.startsWith("/admin");
+    const isAdminRoute = pathname.startsWith("/api/admin") || pathname.includes("/admin");
 
     if (isUserRoute || isAdminRoute) {
         if (!token) {
@@ -67,8 +88,8 @@ const authenticate = async (req: NextRequest, headers: Headers) => {
         try {
             const { payload } = await jose.jwtVerify(token, JWT_SECRET);
 
-            headers.set("x-user-id", payload.userId as string);
-            headers.set("x-user-role", payload.role as string);
+            requestHeaders.set("x-user-id", payload.userId as string);
+            requestHeaders.set("x-user-role", payload.role as string);
 
             return null;
         } catch (error) {
@@ -79,12 +100,12 @@ const authenticate = async (req: NextRequest, headers: Headers) => {
     return null;
 };
 
-const authorize = (request: NextRequest, headers: Headers) => {
+const authorize = (request: NextRequest, requestHeaders: Headers) => {
     const { pathname } = request.nextUrl;
     const isAdminRoute = pathname.startsWith("/api/admin") || pathname.startsWith("/admin");
 
     if (isAdminRoute) {
-        const userRole = headers.get("x-user-role");
+        const userRole = requestHeaders.get("x-user-role");
 
         if (userRole !== "admin") {
             return NextResponse.json({ success: false, error: "Forbidden: Admin access required" }, { status: 403 });
@@ -122,3 +143,6 @@ export async function proxy(request: NextRequest) {
     }
 }
 
+export const config = {
+    matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+};

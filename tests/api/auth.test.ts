@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { GET as getAllUsers } from "@/src/app/api/auth/all-users/route";
+import { GET as getAllUsers } from "@/src/app/api/admin/users/route";
 import { POST as login } from "@/src/app/api/auth/login/route";
 import { POST as logout } from "@/src/app/api/auth/logout/route";
 import { POST as register } from "@/src/app/api/auth/register/route";

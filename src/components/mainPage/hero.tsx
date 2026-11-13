@@ -11,6 +11,10 @@ const Hero = () => {
   const t = useTranslations("Hero");
   const currentLocale = useLocale();
   const isRtl = currentLocale === "ar";
+  const sceneUrl =
+  typeof window !== "undefined"
+    ? `${window.location.origin}/robot/scene.splinecode`
+    : "/robot/scene.splinecode";
 
   return (
     <main
@@ -23,7 +27,7 @@ const Hero = () => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-teal-500/5 rounded-full blur-[180px] pointer-events-none" />
 
       <div className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-auto z-10">
-        <Robot3D scene="https://prod.spline.design/I3XQDee3E3Dg2mIC/scene.splinecode" />
+        <Robot3D scene={`${sceneUrl}`} />
       </div>
 
       <div className="container mx-auto px-6 md:px-12 lg:px-20 z-20 pointer-events-none relative w-full">
