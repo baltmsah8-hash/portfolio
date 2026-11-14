@@ -3,7 +3,7 @@ import { GET as getAllUsers } from "@/src/app/api/admin/users/route";
 import { POST as login } from "@/src/app/api/auth/login/route";
 import { POST as logout } from "@/src/app/api/auth/logout/route";
 import { POST as register } from "@/src/app/api/auth/register/route";
-import { PUT as update } from "@/src/app/api/user/update/route";
+import { PUT as update } from "@/src/app/api/user/profile/route";
 import bcrypt from "bcryptjs";
 import { ChatModel } from "@/src/models/chat.model";
 import { UserModel } from "@/src/models/user.model";
@@ -15,6 +15,7 @@ jest.mock("@/src/lib/db", () => ({
 jest.mock("@/src/models/user.model", () => ({
   UserModel: {
     create: jest.fn(),
+    exists: jest.fn(),
     find: jest.fn(),
     findOne: jest.fn(),
     findOneAndUpdate: jest.fn(),
@@ -24,6 +25,7 @@ jest.mock("@/src/models/user.model", () => ({
 jest.mock("@/src/models/chat.model", () => ({
   ChatModel: {
     aggregate: jest.fn(),
+    find: jest.fn(),
   },
 }));
 
@@ -77,7 +79,9 @@ describe("Authentication API", () => {
   });
 
   it("authenticates a user, normalizes email, and sets an HTTP-only token cookie", async () => {
-    jest.mocked(UserModel.findOne).mockResolvedValue(user as never);
+    jest.mocked(UserModel.findOne).mockReturnValue({
+      lean: jest.fn().mockResolvedValue(user),
+    } as never);
     jest.mocked(bcrypt.compare).mockResolvedValue(true as never);
 
     const response = await login(
@@ -88,7 +92,7 @@ describe("Authentication API", () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({ success: true, user });
+    await expect(response.json()).resolves.toEqual({ success: true, role: "user" });
     expect(UserModel.findOne).toHaveBeenCalledWith({ email: "test@example.com" });
     expect(bcrypt.compare).toHaveBeenCalledWith("password123", "hashed-password");
     expect(response.headers.get("set-cookie")).toContain("token=");
@@ -96,7 +100,9 @@ describe("Authentication API", () => {
   });
 
   it("rejects login when the account does not exist", async () => {
-    jest.mocked(UserModel.findOne).mockResolvedValue(null as never);
+    jest.mocked(UserModel.findOne).mockReturnValue({
+      lean: jest.fn().mockResolvedValue(null),
+    } as never);
 
     const response = await login(
       createRequest("POST", "http://localhost/api/auth/login", {
@@ -127,14 +133,12 @@ describe("Authentication API", () => {
   });
 
   it("registers a user with a hashed password and returns 201", async () => {
-    jest.mocked(UserModel.findOne).mockResolvedValue(null as never);
+    jest.mocked(UserModel.exists).mockResolvedValue(null as never);
     jest.mocked(bcrypt.genSalt).mockResolvedValue("salt" as never);
     jest.mocked(bcrypt.hash).mockResolvedValue("new-hash" as never);
     jest.mocked(UserModel.create).mockResolvedValue({
       ...user,
       password: "new-hash",
-      createdAt: new Date("2026-01-01T00:00:00.000Z"),
-      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
     } as never);
 
     const response = await register(
@@ -150,6 +154,7 @@ describe("Authentication API", () => {
     await expect(response.json()).resolves.toMatchObject({
       success: true,
       message: "email created successfully",
+      role: "user",
     });
     expect(UserModel.create).toHaveBeenCalledWith({
       name: "Test User",
@@ -162,7 +167,7 @@ describe("Authentication API", () => {
   });
 
   it("rejects registering an existing email", async () => {
-    jest.mocked(UserModel.findOne).mockResolvedValue(user as never);
+    jest.mocked(UserModel.exists).mockResolvedValue({ _id: "user-1" } as never);
 
     const response = await register(
       createRequest("POST", "http://localhost/api/auth/register", {
@@ -183,13 +188,14 @@ describe("Authentication API", () => {
 
   it("updates an authenticated user's profile without selecting their password", async () => {
     const updatedUser = { ...user, name: "Updated User" };
-    const select = jest.fn().mockResolvedValue(updatedUser);
+    const lean = jest.fn().mockResolvedValue(updatedUser);
+    const select = jest.fn().mockReturnValue({ lean });
     jest.mocked(UserModel.findOneAndUpdate).mockReturnValue({ select } as never);
 
     const response = await update(
       createRequest(
         "PUT",
-        "http://localhost/api/auth/update",
+        "http://localhost/api/user/profile",
         { name: "Updated User", email: "TEST@example.com", phone: "+14155552671" },
         { "x-user-id": "user-1" },
       ),
@@ -206,11 +212,12 @@ describe("Authentication API", () => {
       { new: true },
     );
     expect(select).toHaveBeenCalledWith("-password");
+    expect(lean).toHaveBeenCalled();
   });
 
   it("rejects profile updates without an authenticated user ID", async () => {
     const response = await update(
-      createRequest("PUT", "http://localhost/api/auth/update", {
+      createRequest("PUT", "http://localhost/api/user/profile", {
         name: "Updated User",
         email: "test@example.com",
         phone: "+14155552671",
@@ -234,7 +241,14 @@ describe("Authentication API", () => {
     expect(forbiddenResponse.status).toBe(403);
 
     jest.mocked(ChatModel.aggregate).mockResolvedValue([{ _id: null, totalSum: 3 }] as never);
-    jest.mocked(UserModel.find).mockResolvedValue([user] as never);
+    const chatSelect = jest.fn().mockReturnValue({
+      lean: jest.fn().mockResolvedValue([]),
+    });
+    jest.mocked(ChatModel.find).mockReturnValue({ select: chatSelect } as never);
+    const userSelect = jest.fn().mockReturnValue({
+      lean: jest.fn().mockResolvedValue([user]),
+    });
+    jest.mocked(UserModel.find).mockReturnValue({ select: userSelect } as never);
 
     const response = await getAllUsers(
       createRequest("GET", "http://localhost/api/auth/all-users", undefined, {
@@ -245,11 +259,14 @@ describe("Authentication API", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       success: true,
-      data: [user],
+      data: [{ ...user }],
       unReadedMessages: [{ _id: null, totalSum: 3 }],
     });
     expect(ChatModel.aggregate).toHaveBeenCalled();
-    expect(UserModel.find).toHaveBeenCalledWith({});
+    expect(ChatModel.find).toHaveBeenCalledWith({});
+    expect(chatSelect).toHaveBeenCalledWith("unreadCount userId");
+    expect(UserModel.find).toHaveBeenCalledWith({ role: { $ne: "admin" } });
+    expect(userSelect).toHaveBeenCalledWith("-password");
   });
 
   it("clears the token cookie on logout", async () => {

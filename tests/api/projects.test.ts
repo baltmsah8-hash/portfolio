@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { DELETE, PUT } from "@/src/app/api/admin/projects/manage/route";
-import { GET, POST } from "@/src/app/api/projects/route";
+import { POST } from "@/src/app/api/admin/projects/upload/route";
+import { GET } from "@/src/app/api/projects/route";
 import { ProjectModel } from "@/src/models/project.model";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -28,11 +29,14 @@ jest.mock("cloudinary", () => ({
 }));
 
 const validProject = {
-  title: "Portfolio website",
-  description: "A personal website showcasing my projects.",
+  title_en: "Portfolio website",
+  title_ar: "موقع الأعمال",
+  description_en: "A personal website showcasing my projects.",
+  description_ar: "موقع شخصي لعرض مشاريعي وأعمالي.",
   images: ["https://res.cloudinary.com/demo/image/upload/v1234/projects/portfolio.jpg"],
   liveLink: "https://example.com",
   repoLink: "https://github.com/example/portfolio",
+  stack: "frontend",
   tags: ["Next.js", "TypeScript"],
 };
 
@@ -66,7 +70,8 @@ describe("Project API", () => {
 
   it("returns projects ordered by creation date", async () => {
     const projects = [savedProject];
-    const sort = jest.fn().mockResolvedValue(projects);
+    const lean = jest.fn().mockResolvedValue(projects);
+    const sort = jest.fn().mockReturnValue({ lean });
     jest.mocked(ProjectModel.find).mockReturnValue({ sort } as never);
 
     const response = await GET();
@@ -75,6 +80,7 @@ describe("Project API", () => {
     await expect(response.json()).resolves.toEqual({ success: true, data: projects });
     expect(ProjectModel.find).toHaveBeenCalledWith({});
     expect(sort).toHaveBeenCalledWith({ createdAt: -1 });
+    expect(lean).toHaveBeenCalled();
   });
 
   it("creates a valid project for an admin", async () => {
@@ -104,7 +110,7 @@ describe("Project API", () => {
 
   it("rejects invalid project data", async () => {
     const response = await POST(
-      createRequest("POST", { ...validProject, title: "x" }, "admin"),
+      createRequest("POST", { ...validProject, title_en: "x" }, "admin"),
     );
 
     expect(response.status).toBe(400);
@@ -116,7 +122,8 @@ describe("Project API", () => {
   });
 
   it("updates an existing project for an admin", async () => {
-    jest.mocked(ProjectModel.findByIdAndUpdate).mockResolvedValue(savedProject as never);
+    const lean = jest.fn().mockResolvedValue(savedProject);
+    jest.mocked(ProjectModel.findByIdAndUpdate).mockReturnValue({ lean } as never);
 
     const response = await PUT(
       createRequest("PUT", { id: "project-1", ...validProject }, "admin"),
@@ -133,6 +140,7 @@ describe("Project API", () => {
       { $set: validProject },
       { new: true },
     );
+    expect(lean).toHaveBeenCalled();
   });
 
   it("rejects updates without a project ID", async () => {
@@ -147,7 +155,8 @@ describe("Project API", () => {
   });
 
   it("returns not found when updating a missing project", async () => {
-    jest.mocked(ProjectModel.findByIdAndUpdate).mockResolvedValue(null as never);
+    const lean = jest.fn().mockResolvedValue(null);
+    jest.mocked(ProjectModel.findByIdAndUpdate).mockReturnValue({ lean } as never);
 
     const response = await PUT(
       createRequest("PUT", { id: "missing", ...validProject }, "admin"),

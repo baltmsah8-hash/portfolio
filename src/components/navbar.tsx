@@ -5,12 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Globe, Menu, X } from "lucide-react";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 export default function Navbar() {
   const t = useTranslations("Navbar");
@@ -67,10 +61,11 @@ export default function Navbar() {
                   <Link
                     key={item.id}
                     href={finalHref}
-                    className={cn(
-                      "px-4 py-2 text-sm font-medium rounded-full text-gray-400 hover:text-green-400 hover:bg-green-500/5 transition-all duration-300",
-                      isActive && "text-green-400 bg-green-500/10 border border-green-500/20 shadow-sm shadow-green-950/20"
-                    )}
+                    className={`px-4 py-2 text-sm font-medium rounded-full hover:text-green-400 hover:bg-green-500/5 transition-all duration-300 ${
+                      isActive
+                        ? "text-green-400 bg-green-500/10 border border-green-500/20 shadow-sm shadow-green-950/20"
+                        : "text-gray-400"
+                    }`}
                   >
                     {item.label}
                   </Link>
@@ -110,12 +105,21 @@ export default function Navbar() {
       </div>
 
       {!isAdmin && (
-        <div className={cn("md:hidden bg-[#02040a] border-b border-green-500/10 px-4 pt-2 pb-6 space-y-2 transition-all duration-300 hidden", isOpen && "block")}>
+        <div className={`md:hidden bg-[#02040a] border-b border-green-500/10 px-4 pt-2 pb-6 space-y-2 transition-all duration-300 ${isOpen ? "block" : "hidden"}`}>
           {navItems.map((item) => {
             const isActive = checkActive(item.href);
             const finalHref = item.href === "/" ? `/${currentLocale}` : `/${currentLocale}${item.href}`;
             return (
-              <Link key={item.id} href={finalHref} onClick={() => setIsOpen(false)} className={cn("block px-4 py-3 rounded-xl text-base font-medium text-gray-400 hover:text-green-400 hover:bg-green-500/5 transition-all", isActive && "text-green-400 bg-green-500/10 border-l-2 border-green-500 rounded-l-none")}>
+              <Link
+                key={item.id}
+                href={finalHref}
+                onClick={() => setIsOpen(false)}
+                className={`block px-4 py-3 text-base font-medium hover:text-green-400 hover:bg-green-500/5 transition-all ${
+                  isActive
+                    ? "text-green-400 bg-green-500/10 border-l-2 border-green-500 rounded-l-none"
+                    : "text-gray-400 rounded-xl"
+                }`}
+              >
                 {item.label}
               </Link>
             );
@@ -130,4 +134,3 @@ export default function Navbar() {
     </nav>
   );
 }
-

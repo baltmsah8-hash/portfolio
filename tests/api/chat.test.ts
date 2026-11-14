@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
 import { POST as sendAdminMessage } from "@/src/app/api/chat/admin/route";
 import { GET as cleanupOldMessages } from "@/src/app/api/cron/cleanup/route";
+import { GET as getChat } from "@/src/app/api/chat/route";
 import { PATCH as pinMessage } from "@/src/app/api/chat/pin/route";
 import { PATCH as markAsRead } from "@/src/app/api/chat/read/route";
 import { POST as sendUserMessage } from "@/src/app/api/chat/user/route";
-import { ChatController } from "@/src/controllers/chat.controller";
 import { ChatModel } from "@/src/models/chat.model";
 import { pusherServer } from "@/src/lib/pusher";
 
@@ -15,7 +15,12 @@ jest.mock("@/src/lib/db", () => ({
 jest.mock("@/src/models/chat.model", () => ({
   ChatModel: {
     findOne: jest.fn(),
-    findOneAndUpdate: jest.fn(),
+    findOneAndUpdate: jest.fn().mockReturnValue({
+      lean: jest.fn().mockResolvedValue(null),
+      select: jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      }),
+    }),
     updateMany: jest.fn(),
   },
 }));
@@ -70,7 +75,7 @@ describe("Chat API", () => {
       message: {
         sender: "user",
         content: "Hello, this is a message",
-        isRead: false,
+        isReaded: false,
       },
     });
     expect(body.message.id).toEqual(expect.any(String));
@@ -82,7 +87,7 @@ describe("Chat API", () => {
             id: body.message.id,
             sender: "user",
             content: "Hello, this is a message",
-            isRead: false,
+            isReaded: false,
           }),
         },
         $inc: { unreadCount: 1 },
@@ -95,7 +100,7 @@ describe("Chat API", () => {
         id: body.message.id,
         content: "Hello, this is a message",
         sender: "user",
-        isRead: false,
+        isReaded: false,
       }),
     });
   });
@@ -112,7 +117,7 @@ describe("Chat API", () => {
       createRequest(
         "POST",
         "http://localhost/api/chat/user",
-        { content: "short" },
+        { content: "bad" },
         { "x-user-id": "user-1" },
       ),
     );
@@ -143,7 +148,7 @@ describe("Chat API", () => {
     expect(body.message).toMatchObject({
       sender: "admin",
       content: "An admin reply to this user",
-      isRead: true,
+      isReaded: false,
     });
     expect(ChatModel.findOneAndUpdate).toHaveBeenCalledWith(
       { userId: "user-1" },
@@ -153,7 +158,7 @@ describe("Chat API", () => {
             id: body.message.id,
             sender: "admin",
             content: "An admin reply to this user",
-            isRead: true,
+            isReaded: false,
           }),
         },
       },
@@ -165,7 +170,7 @@ describe("Chat API", () => {
         id: body.message.id,
         content: "An admin reply to this user",
         sender: "admin",
-        isRead: true,
+        isReaded: false,
       }),
     });
   });
@@ -175,15 +180,15 @@ describe("Chat API", () => {
       createRequest(
         "PATCH",
         "http://localhost/api/chat/read",
-        {},
-        { "x-user-id": "user-1", "x-user-role": "admin" },
+        { userId: "user-1" },
+        { "x-user-role": "admin" },
       ),
     );
     expect(adminResponse.status).toBe(200);
     expect(ChatModel.findOneAndUpdate).toHaveBeenLastCalledWith(
       { userId: "user-1" },
-      { $set: { unreadCount: 0, "messages.$[msg].isRead": true } },
-      { arrayFilters: [{ "msg.sender": "user" }] },
+      { $set: { "messages.$[msg].isReaded": true, unreadCount: 0 } },
+      { arrayFilters: [{ "msg.sender": "user", "msg.isReaded": false }] },
     );
 
     const userResponse = await markAsRead(
@@ -197,8 +202,8 @@ describe("Chat API", () => {
     expect(userResponse.status).toBe(200);
     expect(ChatModel.findOneAndUpdate).toHaveBeenLastCalledWith(
       { userId: "user-1" },
-      { $set: { "messages.$[msg].isRead": true } },
-      { arrayFilters: [{ "msg.sender": "admin" }] },
+      { $set: { "messages.$[msg].isReaded": true } },
+      { arrayFilters: [{ "msg.sender": "admin", "msg.isReaded": false }] },
     );
   });
 
@@ -231,9 +236,9 @@ describe("Chat API", () => {
     );
     expect(response.status).toBe(200);
     expect(ChatModel.findOneAndUpdate).toHaveBeenCalledWith(
-      { userId: "user-1", "messages.id": "message-1" },
+      { userId: "user-1", "messages._id": "message-1" },
       { $set: { "messages.$[msg].isPinned": false } },
-      { arrayFilters: [{ "msg.id": "message-1" }], new: true },
+      { arrayFilters: [{ "msg._id": "message-1" }], new: true },
     );
 
     const invalid = await pinMessage(
@@ -248,22 +253,34 @@ describe("Chat API", () => {
   });
 
   it("returns an empty chat when no chat exists and requires a user identity", async () => {
-    const select = jest.fn().mockResolvedValue(null);
-    jest.mocked(ChatModel.findOne).mockReturnValue({ select } as never);
+    const lean = jest.fn().mockResolvedValue(null);
+    const select = jest.fn().mockReturnValue({ lean });
+    jest.mocked(ChatModel.findOneAndUpdate).mockReturnValue({ select } as never);
 
-    const response = await ChatController.getChat(
-      {},
-      createRequest("GET", "http://localhost/api/chat?userId=user-1"),
+    const response = await getChat(
+      createRequest("GET", "http://localhost/api/chat", undefined, {
+        "x-user-id": "user-1",
+        "x-user-role": "user",
+      }),
     );
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ success: true, messages: [] });
-    expect(ChatModel.findOne).toHaveBeenCalledWith({ userId: "user-1" });
-
-    const missingIdentity = await ChatController.getChat(
-      {},
-      createRequest("GET", "http://localhost/api/chat"),
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      messages: [],
+      userId: "user-1",
+    });
+    expect(ChatModel.findOneAndUpdate).toHaveBeenCalledWith(
+      { userId: "user-1" },
+      { $set: { "messages.$[msg].isReaded": true } },
+      {
+        arrayFilters: [{ "msg.sender": "admin", "msg.isReaded": false }],
+        new: true,
+      },
     );
-    expect(missingIdentity.status).toBe(401);
+    expect(select).toHaveBeenCalledWith("messages unreadCount");
+
+    const missingIdentity = await getChat(createRequest("GET", "http://localhost/api/chat"));
+    expect(missingIdentity.status).toBe(400);
   });
 
   it("cleans up old messages only with the cron authorization secret", async () => {
