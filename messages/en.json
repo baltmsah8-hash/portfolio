@@ -4,8 +4,8 @@
     "services": "Services",
     "projects": "Projects",
     "technologies": "Technologies",
-    "connect": "Start Now",
-    "contact": "Contact Me"
+    "contact": "Contact Me",
+    "connect": "Start Now"
   },
   "Hero": {
     "titleFirst": "Full-Stack",

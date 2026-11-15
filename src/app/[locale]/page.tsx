@@ -6,7 +6,7 @@ import Technologies from "../../components/mainPage/technologies";
 
 export default function Home() {
   return (
-    <main>
+    <main className="bg-[#02040a] flex flex-col">
       <Hero />
       <Services />
       <Projects />

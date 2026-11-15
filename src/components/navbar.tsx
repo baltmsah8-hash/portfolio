@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Globe, Menu, X } from "lucide-react";
 
-export default function Navbar() {
+const Navbar = () => {
   const t = useTranslations("Navbar");
   const currentLocale = useLocale();
   const pathname = usePathname();
@@ -48,7 +48,7 @@ export default function Navbar() {
 
           <div className="flex-shrink-0">
             <Link href={`/${currentLocale}`} className="text-2xl font-black bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 bg-clip-text text-transparent tracking-wider hover:opacity-90 transition-opacity font-mono">
-              ABDO.
+              ABDO
             </Link>
           </div>
 
@@ -83,7 +83,7 @@ export default function Navbar() {
             {!isAdmin && (
               <Link href={`/${currentLocale}/profile`} className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium rounded-full group bg-gradient-to-br from-green-500 to-teal-500 text-green-400 focus:ring-4 focus:outline-none focus:ring-green-900">
                 <span className="relative px-5 py-2 transition-all ease-in duration-75 bg-[#02040a] rounded-full group-hover:bg-opacity-50 group-hover:text-white font-bold">
-                  {t("contact")}
+                  {t("connect")}
                 </span>
               </Link>
             )}
@@ -126,7 +126,7 @@ export default function Navbar() {
           })}
           <div className="pt-4 border-t border-green-500/10">
             <Link href={`/${currentLocale}/profile`} onClick={() => setIsOpen(false)} className="block w-full text-center py-3 px-5 rounded-xl bg-gradient-to-r from-green-600 to-teal-600 text-white font-bold transition-all shadow-lg shadow-green-950/30">
-              {t("contact")}
+              {t("connect")}
             </Link>
           </div>
         </div>
@@ -134,3 +134,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+export default Navbar;

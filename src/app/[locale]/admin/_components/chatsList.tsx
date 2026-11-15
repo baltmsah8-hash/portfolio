@@ -74,7 +74,7 @@ const ChatsList = ({ currentLocale, router, users, loading }: ChatsListProps) =>
             <div className="w-full space-y-5 custom-scrollbar py-6">
                 {filteredUsers.length === 0 ? (
                     <div className="p-8 text-center text-gray-500 font-mono text-xs border border-dashed border-gray-800 rounded-2xl uppercase tracking-wider">
-                        {searchQuery ? "NO_MATCHING_PROTOCOL_FOUND" : "NO_ACTIVE_CUSTOMERS_FOUND"}
+                        {searchQuery ? "NO MATCHING PROTOCOL FOUND" : "NO CUSTOMERS FOUND"}
                     </div>
                 ) : (
                     filteredUsers.map((user) => (
@@ -108,12 +108,6 @@ const ChatsList = ({ currentLocale, router, users, loading }: ChatsListProps) =>
                                         <span className="flex items-center gap-1 text-gray-500"><Calendar className="w-3 h-3 text-green-500/30" /> {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true, locale: dateLocale })}</span>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="flex items-center justify-end flex-shrink-0 self-end sm:self-center">
-                                <span className="text-[9px] font-mono text-gray-600 uppercase tracking-widest px-2.5 py-1 rounded-md bg-gray-950/40 border border-gray-900">
-                                    SECURE_LINK
-                                </span>
                             </div>
 
                         </div>
