@@ -3,7 +3,7 @@ import { GET as getAllUsers } from "@/src/app/api/admin/users/route";
 import { POST as login } from "@/src/app/api/auth/login/route";
 import { POST as logout } from "@/src/app/api/auth/logout/route";
 import { POST as register } from "@/src/app/api/auth/register/route";
-import { PUT as update } from "@/src/app/api/user/profile/route";
+import { PATCH as update } from "@/src/app/api/user/profile/route";
 import bcrypt from "bcryptjs";
 import { ChatModel } from "@/src/models/chat.model";
 import { UserModel } from "@/src/models/user.model";
@@ -194,7 +194,7 @@ describe("Authentication API", () => {
 
     const response = await update(
       createRequest(
-        "PUT",
+        "PATCH",
         "http://localhost/api/user/profile",
         { name: "Updated User", email: "TEST@example.com", phone: "+14155552671" },
         { "x-user-id": "user-1" },
@@ -217,7 +217,7 @@ describe("Authentication API", () => {
 
   it("rejects profile updates without an authenticated user ID", async () => {
     const response = await update(
-      createRequest("PUT", "http://localhost/api/user/profile", {
+      createRequest("PATCH", "http://localhost/api/user/profile", {
         name: "Updated User",
         email: "test@example.com",
         phone: "+14155552671",

@@ -48,7 +48,7 @@ const Navbar = () => {
 
           <div className="flex-shrink-0">
             <Link href={`/${currentLocale}`} className="text-2xl font-black bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 bg-clip-text text-transparent tracking-wider hover:opacity-90 transition-opacity font-mono">
-              ABDO
+              ABDO.
             </Link>
           </div>
 

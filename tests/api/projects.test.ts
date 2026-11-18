@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { DELETE, PUT } from "@/src/app/api/admin/projects/manage/route";
+import { DELETE, PATCH } from "@/src/app/api/admin/projects/manage/route";
 import { POST } from "@/src/app/api/admin/projects/upload/route";
 import { GET } from "@/src/app/api/projects/route";
 import { ProjectModel } from "@/src/models/project.model";
@@ -125,8 +125,8 @@ describe("Project API", () => {
     const lean = jest.fn().mockResolvedValue(savedProject);
     jest.mocked(ProjectModel.findByIdAndUpdate).mockReturnValue({ lean } as never);
 
-    const response = await PUT(
-      createRequest("PUT", { id: "project-1", ...validProject }, "admin"),
+    const response = await PATCH(
+      createRequest("PATCH", { id: "project-1", ...validProject }, "admin"),
     );
 
     expect(response.status).toBe(200);
@@ -144,7 +144,7 @@ describe("Project API", () => {
   });
 
   it("rejects updates without a project ID", async () => {
-    const response = await PUT(createRequest("PUT", validProject, "admin"));
+    const response = await PATCH(createRequest("PATCH", validProject, "admin"));
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
@@ -158,8 +158,8 @@ describe("Project API", () => {
     const lean = jest.fn().mockResolvedValue(null);
     jest.mocked(ProjectModel.findByIdAndUpdate).mockReturnValue({ lean } as never);
 
-    const response = await PUT(
-      createRequest("PUT", { id: "missing", ...validProject }, "admin"),
+    const response = await PATCH(
+      createRequest("PATCH", { id: "missing", ...validProject }, "admin"),
     );
 
     expect(response.status).toBe(404);

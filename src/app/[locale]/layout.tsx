@@ -39,6 +39,13 @@ export const metadata: Metadata = {
   },
   description:
     "Portfolio of Abdelrhman Hany — Full-Stack Web Developer specializing in Next.js, TypeScript, and modern scalable web applications.",
+  icons: {
+    icon: [
+      { url: "/logo.svg", type: "image/svg+xml" },
+    ],
+    shortcut: ["/logo.svg"],
+    apple: ["/logo.svg"],
+  },
 };
 
 interface LayoutProps {

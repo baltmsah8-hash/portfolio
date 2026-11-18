@@ -83,7 +83,8 @@ const authenticate = async (req: NextRequest, requestHeaders: Headers) => {
         pathname.includes("/profile") ||
         pathname.includes("/chat") ||
         pathname.startsWith("/api/user") ||
-        pathname.startsWith("/api/chat");
+        pathname.startsWith("/api/chat") || 
+        pathname.startsWith("/api/push"); 
 
     const isAdminRoute =
         pathname.startsWith("/api/admin") ||
@@ -182,5 +183,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+    matcher: [
+        '/((?!_next|_vercel|sw\\.js|sound-effects|.*\\..*).*)',
+        '/api/:path*'
+    ]
 };

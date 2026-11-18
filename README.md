@@ -12,6 +12,7 @@ A bilingual, full-stack developer portfolio built with Next.js. Alongside projec
 - **Admin dashboard:** Manage projects and uploaded images, browse registered users, and open client conversations.
 - **Authentication and profiles:** Registration, login, profile editing, and logout using JWTs in HTTP-only cookies. Passwords are hashed with bcrypt.
 - **Real-time support chat:** User/admin messages, read receipts, unread message counts, and admin message pinning, delivered through Pusher.
+- **Background browser push notifications:** Web Push and VAPID let users receive chat notifications when the browser is closed or the chat page is in the background. Clicking a notification opens or focuses the relevant conversation.
 - **Scheduled chat cleanup:** The Vercel cron configuration calls the cleanup endpoint weekly. Messages older than seven days are removed unless pinned, and unread counts are recalculated.
 - **Responsive interface:** Tailwind CSS, Lucide icons, loading states, and a shared alert context.
 - **API validation and rate limits:** Zod validates API inputs. The proxy applies in-memory rate limits to login, profile updates, and user chat messages.
@@ -80,6 +81,7 @@ tests/api/                   # Jest API and proxy tests
 | `/api/chat/admin` | `POST` | Send an admin reply |
 | `/api/chat/read` | `PATCH` | Mark messages as read |
 | `/api/chat/pin` | `PATCH` | Pin or unpin a message |
+| `/api/push/subscribe` | `POST`, `DELETE` | Subscribe or unsubscribe the authenticated browser to Web Push notifications |
 | `/api/cron/cleanup` | `GET` | Delete expired, unpinned messages and recalculate unread counts |
 
 ## Getting Started
@@ -90,6 +92,7 @@ tests/api/                   # Jest API and proxy tests
 - npm
 - A MongoDB database
 - Pusher and Cloudinary accounts for real-time chat and project image management
+- HTTPS (or `localhost`) and a generated VAPID key pair for browser push notifications
 
 ### Install
 
@@ -128,6 +131,11 @@ NEXT_PUBLIC_CLOUDINARY_PRESET=<unsigned-upload-preset>
 
 # Protect the scheduled cleanup endpoint
 CRON_SECRET=<long-random-secret>
+
+# Web Push: generate with `npx web-push generate-vapid-keys`
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<public-vapid-key>
+VAPID_PRIVATE_KEY=<private-vapid-key>
+VAPID_EMAIL=mailto:<support-contact-email>
 ```
 
 The admin account is seeded automatically when the app first connects to MongoDB if no admin exists and the admin email, phone, and password are configured. `ADMIN_NAME` is optional and defaults to `Admin`. There is no separate seed command.

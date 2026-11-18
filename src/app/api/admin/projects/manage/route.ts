@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { ProjectController } from "@/src/controllers/project.controller";
 
-export async function PUT(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
     const body = await req.json();
     return ProjectController.update(body, req);
 }

@@ -1,10 +1,12 @@
 import { ChatModel } from "../models/chat.model";
+import { UserModel } from "../models/user.model";
 import { userMessageSchema, adminMessageSchema } from "../lib/validators";
 import { AppError, handleApi } from "../lib/api-handler";
 import { connectDB } from "../lib/db";
 import { pusherServer } from "../lib/pusher";
 import crypto from "crypto";
 import { NextRequest } from "next/server";
+import { sendWebPushToUsers } from "../lib/web-push";
 
 export const ChatController = {
     sendFromUser: handleApi(async (body, req: NextRequest) => {
@@ -22,7 +24,7 @@ export const ChatController = {
             createdAt: new Date(),
         };
 
-        await ChatModel.findOneAndUpdate(
+        const updatedChat = await ChatModel.findOneAndUpdate(
             { userId },
             {
                 $push: { messages: newMessage },
@@ -35,6 +37,28 @@ export const ChatController = {
             sender: "user",
             message: newMessage,
         });
+
+        // لاعلام الادمن بوجود رساله جديده
+        await pusherServer.trigger("admin-notifications", "new-user-message", {
+            userId,
+            unreadCount: updatedChat.unreadCount,
+        });
+
+        // ارسال الاشعارات عبر المتصفح
+        const [senderUser, admins] = await Promise.all([
+            UserModel.findById(userId).select("name").lean(),
+            UserModel.find({ role: "admin" }).select("_id").lean(),
+        ]);
+
+        if (admins.length > 0) {
+            const adminIds = admins.map((admin) => admin._id.toString());
+            await sendWebPushToUsers(adminIds, {
+                title: `New message ${senderUser?.name}`,
+                body: content,
+                url: `/ar/chat?userId=${userId}`,
+                chatId: userId,
+            });
+        }
 
         return { success: true, message: newMessage };
     }),
@@ -64,6 +88,15 @@ export const ChatController = {
             sender: "admin",
             message: newMessage,
         });
+
+        // ارسال اشعار لجهاز المستخدم
+        await sendWebPushToUsers([userId], {
+            title: "New message from admin",
+            body: content,
+            url: `/ar/chat`,
+            chatId: userId,
+        });
+
 
         return { success: true, message: newMessage };
     }),
@@ -140,56 +173,56 @@ export const ChatController = {
         return { success: true };
     }),
 
-cleanupOldMessages: handleApi(async (body, req: NextRequest) => {
-    await connectDB();
+    cleanupOldMessages: handleApi(async (body, req: NextRequest) => {
+        await connectDB();
 
-    const authHeader = req.headers.get("authorization");
+        const authHeader = req.headers.get("authorization");
 
-    if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        throw new AppError("Unauthorized Cron Trigger", 401);
-    }
-
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-    const result = await ChatModel.updateMany(
-        {},
-        {
-            $pull: {
-                messages: {
-                    createdAt: { $lt: oneWeekAgo },
-                    isPinned: false,
-                },
-            },
+        if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+            throw new AppError("Unauthorized Cron Trigger", 401);
         }
-    );
 
-    await ChatModel.updateMany({}, [
-        {
-            $set: {
-                unreadCount: {
-                    $size: {
-                        $filter: {
-                            input: "$messages",
-                            as: "msg",
-                            cond: {
-                                $and: [
-                                    { $eq: ["$$msg.sender", "user"] },
-                                    { $eq: ["$$msg.isReaded", false] },
-                                ],
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+        const result = await ChatModel.updateMany(
+            {},
+            {
+                $pull: {
+                    messages: {
+                        createdAt: { $lt: oneWeekAgo },
+                        isPinned: false,
+                    },
+                },
+            }
+        );
+
+        await ChatModel.updateMany({}, [
+            {
+                $set: {
+                    unreadCount: {
+                        $size: {
+                            $filter: {
+                                input: "$messages",
+                                as: "msg",
+                                cond: {
+                                    $and: [
+                                        { $eq: ["$$msg.sender", "user"] },
+                                        { $eq: ["$$msg.isReaded", false] },
+                                    ],
+                                },
                             },
                         },
                     },
                 },
             },
-        },
-    ]);
+        ]);
 
-    return {
-        success: true,
-        message: "Old messages cleaned up successfully",
-        affectedRows: result.modifiedCount,
-    };
-}),
+        return {
+            success: true,
+            message: "Old messages cleaned up successfully",
+            affectedRows: result.modifiedCount,
+        };
+    }),
 
 
     pinMessage: handleApi(async (body, req: NextRequest) => {

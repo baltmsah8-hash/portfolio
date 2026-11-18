@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { PushToggleButton } from "@/src/components/assets/PushToggleButton";
 import { LayoutDashboard, FolderPlus, FolderKanban, MessageSquare, LogOut, Terminal, X } from "lucide-react";
 
 export type DashboardView = "projects_list" | "add_project" | "chats_list";
@@ -13,7 +14,7 @@ interface SidebarProps {
   isOpenMobile: boolean;
   setIsOpenMobile: (open: boolean) => void;
   totalUnread: number;
-  isRtl: boolean; // 🌟 ضفنا دي عشان نحدد مكانه وحركته بدقة في العربي والإنجليزي
+  isRtl: boolean;
 }
 
 export const Sidebar = ({
@@ -31,14 +32,12 @@ export const Sidebar = ({
     setIsOpenMobile(false);
   };
 
-  // 🌟 تحديد مكان وحركة السايد بار في الموبايل بوضوح تام
   const mobilePositionClass = isRtl
     ? `right-0 ${isOpenMobile ? "translate-x-0" : "translate-x-full"}`
     : `left-0 ${isOpenMobile ? "translate-x-0" : "-translate-x-full"}`;
 
   return (
     <>
-      {/* خلفية معتمة للموبايل تقفل السايد بار لو ضغطت بره */}
       {isOpenMobile && (
         <div
           onClick={() => setIsOpenMobile(false)}
@@ -49,7 +48,6 @@ export const Sidebar = ({
       <aside
         className={`w-64 bg-[#070a13]/95 border-e border-green-500/10 backdrop-blur-xl flex flex-col justify-between p-5 flex-shrink-0 z-50 fixed md:relative top-20 md:top-0 h-[calc(100dvh-80px)] md:h-full transition-transform duration-300 ease-in-out md:translate-x-0 ${mobilePositionClass}`}
       >
-        {/* القسم العلوي: الهيدر والأزرار */}
         <div className="flex-1 flex flex-col min-h-0 space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-green-500/10 flex-shrink-0">
             <div className="flex items-center gap-2.5">
@@ -122,8 +120,8 @@ export const Sidebar = ({
           </nav>
         </div>
 
-        {/* القسم السفلي: زرار تسجيل الخروج ظاهر وثابت في آخر الشاشة */}
         <div className="pt-4 border-t border-green-500/10 flex-shrink-0">
+        <PushToggleButton variant="sidebar" />
           <button
             onClick={onLogout}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl font-mono text-xs font-bold bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 transition-all duration-300 cursor-pointer"

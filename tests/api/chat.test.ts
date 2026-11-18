@@ -7,6 +7,7 @@ import { PATCH as markAsRead } from "@/src/app/api/chat/read/route";
 import { POST as sendUserMessage } from "@/src/app/api/chat/user/route";
 import { ChatModel } from "@/src/models/chat.model";
 import { pusherServer } from "@/src/lib/pusher";
+import { sendWebPushToUsers } from "@/src/lib/web-push";
 
 jest.mock("@/src/lib/db", () => ({
   connectDB: jest.fn().mockResolvedValue(undefined),
@@ -16,7 +17,7 @@ jest.mock("@/src/models/chat.model", () => ({
   ChatModel: {
     findOne: jest.fn(),
     findOneAndUpdate: jest.fn().mockReturnValue({
-      lean: jest.fn().mockResolvedValue(null),
+      lean: jest.fn().mockResolvedValue({ unreadCount: 1, messages: [] }),
       select: jest.fn().mockReturnValue({
         lean: jest.fn().mockResolvedValue(null),
       }),
@@ -30,6 +31,21 @@ jest.mock("@/src/lib/pusher", () => ({
     trigger: jest.fn().mockResolvedValue(undefined),
   },
   pusherClient: {},
+}));
+
+jest.mock("@/src/lib/web-push", () => ({
+  sendWebPushToUsers: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock("@/src/models/user.model", () => ({
+  UserModel: {
+    findById: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue({ name: "Test User" }) }),
+    }),
+    find: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([{ _id: "admin-1" }]) }),
+    }),
+  },
 }));
 
 function createRequest(
@@ -103,6 +119,15 @@ describe("Chat API", () => {
         isReaded: false,
       }),
     });
+    expect(sendWebPushToUsers).toHaveBeenCalledWith(
+      ["admin-1"],
+      expect.objectContaining({
+        title: expect.stringContaining("New message"),
+        body: "Hello, this is a message",
+        url: "/ar/chat?userId=user-1",
+        chatId: "user-1",
+      }),
+    );
   });
 
   it("rejects user messages when the user ID is missing or content is invalid", async () => {
@@ -173,6 +198,15 @@ describe("Chat API", () => {
         isReaded: false,
       }),
     });
+    expect(sendWebPushToUsers).toHaveBeenCalledWith(
+      ["user-1"],
+      expect.objectContaining({
+        title: "New message from admin",
+        body: "An admin reply to this user",
+        url: "/ar/chat",
+        chatId: "user-1",
+      }),
+    );
   });
 
   it("marks user messages as read for admins and admin messages for users", async () => {

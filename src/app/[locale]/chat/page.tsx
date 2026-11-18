@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAlert } from "@/src/context/alert";
 import MessagesSkeleton from "@/src/components/loading/messageSkeleton";
+import { PushToggleButton } from "@/src/components/assets/PushToggleButton";
 import { Send, MessageSquare, ArrowLeft, Pin, PinOff, Check } from "lucide-react";
 import Link from "next/link";
 import Pusher from "pusher-js";
@@ -49,6 +50,8 @@ const ChatPage = () => {
     const { showAlert } = useAlert();
     const searchParams = useSearchParams();
     const router = useRouter();
+    const receiveSoundRef = useRef<HTMLAudioElement | null>(null);
+    const sendSoundRef = useRef<HTMLAudioElement | null>(null);
 
     const targetCustomerId = searchParams.get("userId");
     const isAdminMode = !!targetCustomerId;
@@ -145,8 +148,15 @@ const ChatPage = () => {
                     showAlert("The server returned an invalid message.", "error");
                     return;
                 }
+
                 setMessages((prev) => appendMessage(prev, message));
                 setInputMessage("");
+
+                if (sendSoundRef.current) {
+                    sendSoundRef.current.currentTime = 0;
+                    sendSoundRef.current.play().catch(() => { });
+                }
+
             } else {
                 console.log(data.error)
                 showAlert(data.error || "Transmission block. Message not sent.", "error");
@@ -188,8 +198,22 @@ const ChatPage = () => {
 
             setMessages((prev) => appendMessage(prev, normalizedMessage));
 
-            if (isFromOtherParty && document.visibilityState === "visible") {
-                triggerMarkAsRead();
+            if (isFromOtherParty) {
+
+                if (receiveSoundRef.current) {
+                    receiveSoundRef.current.currentTime = 0;
+                    receiveSoundRef.current.play().catch(() => { });
+                }
+
+                if (document.visibilityState === "visible") {
+                    // تحديث حالة الرسائل لحظيا
+                    triggerMarkAsRead();
+                    setMessages((prev) =>
+                        prev.map((msg) =>
+                            msg.sender !== myRole ? { ...msg, isReaded: true } : msg
+                        )
+                    );
+                }
             }
         });
 
@@ -227,6 +251,14 @@ const ChatPage = () => {
         scrollToBottom();
     }, [messages]);
 
+    useEffect(() => {
+        receiveSoundRef.current = new Audio("/sound-effects/new_message.mp3");
+        receiveSoundRef.current.volume = 0.6;
+
+        sendSoundRef.current = new Audio("/sound-effects/send.mp3");
+        sendSoundRef.current.volume = 0.5;
+    }, []);
+
     return (
         <main
             dir={isRtl ? "rtl" : "ltr"}
@@ -246,12 +278,16 @@ const ChatPage = () => {
                         </h2>
                     </div>
 
-                    <Link
-                        href={isAdminMode ? `/${currentLocale}/admin` : `/${currentLocale}/profile`}
-                        className="p-2.5 rounded-full bg-green-500/5 border border-green-500/10 text-green-400 hover:bg-green-500/10 transition-all duration-300"
-                    >
-                        <ArrowLeft className={`w-4 h-4 ${isRtl ? "rotate-180" : ""}`} />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <PushToggleButton variant="icon" />
+
+                        <Link
+                            href={isAdminMode ? `/${currentLocale}/admin` : `/${currentLocale}/profile`}
+                            className="p-2.5 rounded-full bg-green-500/5 border border-green-500/10 text-green-400 hover:bg-green-500/10 transition-all duration-300"
+                        >
+                            <ArrowLeft className={`w-4 h-4 ${isRtl ? "rotate-180" : ""}`} />
+                        </Link>
+                    </div>
                 </div>
 
                 {chatLoading ? (

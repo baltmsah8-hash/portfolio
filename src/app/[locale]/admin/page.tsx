@@ -9,6 +9,7 @@ import { ProjectsList } from "./_components/projectsList";
 import { AddProject } from "./_components/addProject";
 import { useAlert } from "@/src/context/alert";
 import { MessageSquare } from "lucide-react";
+import Pusher from "pusher-js";
 
 export interface UserData {
   _id: string;
@@ -16,6 +17,7 @@ export interface UserData {
   email: string;
   phone: string;
   role: string;
+  unreadCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,13 +28,13 @@ const AdminDashboard = () => {
   const isRtl = currentLocale === "ar";
   const router = useRouter();
   const { showAlert } = useAlert();
+  const notificationSoundRef = React.useRef<HTMLAudioElement | null>(null);
 
   const [currentView, setCurrentView] = useState<DashboardView>("chats_list");
   const [bootSequence, setBootSequence] = useState(true);
   const [fadeBoot, setFadeBoot] = useState(false);
   const [isOpenMobile, setIsOpenMobile] = useState(false);
 
-  // 🌟 States مشتركة للعملاء وإجمالي الرسائل غير المقروءة
   const [users, setUsers] = useState<UserData[]>([]);
   const [totalUnread, setTotalUnread] = useState<number>(0);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -43,7 +45,6 @@ const AdminDashboard = () => {
     return () => { clearTimeout(fadeTimeout); clearTimeout(bootTimeout); };
   }, []);
 
-  // 🌟 جلب العملاء والعداد الإجمالي مرة واحدة هنا
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -73,6 +74,66 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, [router, currentLocale]);
 
+  useEffect(() => {
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
+
+    const adminChannel = pusher.subscribe("admin-notifications");
+
+    adminChannel.bind(
+      "new-user-message",
+      (data: { userId: string; unreadCount: number }) => {
+        setUsers((prevUsers) => {
+          const userExists = prevUsers.some(
+            (u) => String(u._id) === String(data.userId)
+          );
+
+          // إذا لم يكن العميل في القائمة، لا نغير القائمة (أو يمكنك إعادة جلب البيانات)
+          if (!userExists) return prevUsers;
+
+          const updatedUsers = prevUsers.map((user) =>
+            String(user._id) === String(data.userId)
+              ? { ...user, unreadCount: Number(data.unreadCount) }
+              : user
+          );
+
+          // نقل العميل صاحب الرسالة إلى أعلى القائمة
+          return updatedUsers.sort((a, b) =>
+            String(a._id) === String(data.userId)
+              ? -1
+              : String(b._id) === String(data.userId)
+                ? 1
+                : 0
+          );
+        });
+
+        // تحديث العداد الإجمالي بشكل مستقل خارج setUsers
+        setTotalUnread((prevTotal) => prevTotal + 1);
+
+        // تشغيل صوت للتنبيه برساله جديده
+        const notificationSound = notificationSoundRef.current;
+        if (notificationSound) {
+          notificationSound.currentTime = 0;
+          notificationSound.play().catch((err) => {
+            console.warn("The browser prevents audio from playing automatically before the admin interacts with it:", err);
+          });
+        }
+
+      }
+    );
+
+    return () => {
+      adminChannel.unbind_all();
+      pusher.unsubscribe("admin-notifications");
+      pusher.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    notificationSoundRef.current = new Audio("/sound-effects/new_message.mp3");
+    notificationSoundRef.current.volume = 0.6;
+  }, []);
 
   const logout = async () => {
 
